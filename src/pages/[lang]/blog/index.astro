@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import PostCard from '@/components/PostCard.astro'
+import Search from '@/components/Search.astro'
 import { getCollection } from 'astro:content'
 import { languages } from '@/i18n/ui'
 import { useTranslations, stripLangPrefix } from '@/i18n/utils'
@@ -19,6 +20,10 @@ const posts = (await getCollection('blog', ({ data }) => {
 
 <BaseLayout title={t('nav.blog')} description={t('list.posts')}>
   <h1 class="text-3xl font-bold mb-8 text-primary">{t('nav.blog')}</h1>
+
+  <div class="mb-8">
+    <Search />
+  </div>
 
   {posts.length > 0 ? (
     <div class="grid gap-6">

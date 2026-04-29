@@ -1,0 +1,81 @@
+---
+import { getLangFromUrl } from '@/i18n/utils'
+
+const lang = getLangFromUrl(Astro.url)
+---
+
+<div class="relative">
+  <input
+    type="text"
+    id="search-input"
+    placeholder={lang === 'zh' ? '搜索文章...' : 'Search posts...'}
+    class="w-full px-4 py-2 border border-border rounded-lg bg-card-bg text-text focus:outline-none focus:border-accent"
+  />
+  <div
+    id="search-results"
+    class="absolute top-full left-0 right-0 mt-2 bg-card-bg border border-border rounded-lg shadow-lg hidden max-h-96 overflow-y-auto z-50"
+  >
+  </div>
+</div>
+
+<script is:inline>
+  // Pagefind will be loaded from the generated files
+  let pagefind = null
+
+  async function loadPagefind() {
+    if (pagefind) return pagefind
+
+    try {
+      pagefind = await import('/pagefind/pagefind.js')
+      await pagefind.init()
+      return pagefind
+    } catch (e) {
+      console.error('Failed to load Pagefind:', e)
+      return null
+    }
+  }
+
+  const searchInput = document.getElementById('search-input')
+  const searchResults = document.getElementById('search-results')
+
+  if (searchInput && searchResults) {
+    searchInput.addEventListener('input', async (e) => {
+      const query = e.target.value
+
+      if (query.length > 2) {
+        const pf = await loadPagefind()
+        if (!pf) return
+
+        const results = await pf.search(query)
+        searchResults.innerHTML = ''
+
+        if (results.results.length > 0) {
+          for (const result of results.results.slice(0, 5)) {
+            const data = await result.data()
+            const div = document.createElement('div')
+            div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border last:border-b-0'
+            div.innerHTML = `
+              <a href="${data.url}" class="block">
+                <h4 class="font-semibold text-primary">${data.meta?.title || 'Untitled'}</h4>
+                <p class="text-sm text-secondary mt-1 line-clamp-2">${data.excerpt || ''}</p>
+              </a>
+            `
+            searchResults.appendChild(div)
+          }
+        } else {
+          searchResults.innerHTML = '<div class="p-3 text-secondary">No results found</div>'
+        }
+
+        searchResults.classList.remove('hidden')
+      } else {
+        searchResults.classList.add('hidden')
+      }
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.classList.add('hidden')
+      }
+    })
+  }
+</script>
