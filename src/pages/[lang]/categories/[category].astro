@@ -3,7 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro'
 import PostCard from '@/components/PostCard.astro'
 import { getCollection } from 'astro:content'
 import { languages } from '@/i18n/ui'
-import { useTranslations } from '@/i18n/utils'
+import { useTranslations, stripLangPrefix } from '@/i18n/utils'
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft)
@@ -40,7 +40,7 @@ const t = useTranslations(lang as keyof typeof languages)
           pubDate={post.data.pubDate}
           tags={post.data.tags}
           category={post.data.category}
-          slug={post.slug}
+          slug={stripLangPrefix(post.slug)}
           image={post.data.image}
         />
       ))}

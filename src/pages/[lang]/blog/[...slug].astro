@@ -1,16 +1,14 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getCollection } from 'astro:content'
-import { getLangFromUrl, useTranslations } from '@/i18n/utils'
-import { languages } from '@/i18n/ui'
+import { getLangFromUrl, useTranslations, stripLangPrefix } from '@/i18n/utils'
 
 export async function getStaticPaths() {
-  const langPrefixPattern = new RegExp(`^(${Object.keys(languages).join('|')})/`)
   const posts = await getCollection('blog')
   return posts.map((post) => ({
     params: {
       lang: post.data.lang,
-      slug: post.slug.replace(langPrefixPattern, ''),
+      slug: stripLangPrefix(post.slug),
     },
     props: { post },
   }))

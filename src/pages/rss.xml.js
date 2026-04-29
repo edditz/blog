@@ -1,5 +1,6 @@
 import rss from '@astrojs/rss'
 import { getCollection } from 'astro:content'
+import { stripLangPrefix } from '@/i18n/utils'
 
 export const GET = async (context) => {
   const posts = await getCollection('blog', ({ data }) => !data.draft)
@@ -17,7 +18,7 @@ export const GET = async (context) => {
       title: post.data.title,
       pubDate: post.data.pubDate,
       description: post.data.description,
-      link: `/zh/blog/${post.slug.replace(/^(zh|en)\//, '')}/`,
+      link: `/zh/blog/${stripLangPrefix(post.slug)}/`,
       categories: [...post.data.tags, post.data.category],
     })),
     customData: '<language>zh-cn</language>',

@@ -1,4 +1,10 @@
-import { ui, defaultLang, type Lang, type TranslationKey } from './ui'
+import { ui, defaultLang, languages, type Lang, type TranslationKey } from './ui'
+
+const langPrefixPattern = new RegExp(`^(${Object.keys(languages).join('|')})/`)
+
+export function stripLangPrefix(slug: string): string {
+  return slug.replace(langPrefixPattern, '')
+}
 
 export function getLangFromUrl(url: URL): Lang {
   const [, lang] = url.pathname.split('/')
