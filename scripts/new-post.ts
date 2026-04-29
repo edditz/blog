@@ -24,10 +24,12 @@ const slug = title
   .replace(/[^a-z0-9]+/g, '-') // replace non-alphanumeric with hyphens
   .replace(/(^-|-$)+/g, ''); // remove leading/trailing hyphens
 
-const filePath = path.join(postsDir, `${slug}.mdx`);
+const postDir = path.join(postsDir, slug);
+const filePath = path.join(postDir, 'index.mdx');
+const imagesDir = path.join(postDir, 'images');
 
-if (fs.existsSync(filePath)) {
-  console.error(`Post already exists at: ${filePath}`);
+if (fs.existsSync(postDir)) {
+  console.error(`Post already exists at: ${postDir}`);
   process.exit(1);
 }
 
@@ -36,8 +38,6 @@ const month = String(today.getMonth() + 1).padStart(2, '0');
 const day = String(today.getDate()).padStart(2, '0');
 const year = today.getFullYear();
 const formattedDate = `${month}/${day}/${year}`;
-
-const imagesDir = path.join(postsDir, `${slug}-images`);
 
 const content = `---
 title: "${title}"
@@ -52,9 +52,9 @@ image: ""
 Write your post content here!
 `;
 
-fs.writeFileSync(filePath, content, 'utf8');
 fs.mkdirSync(imagesDir, { recursive: true });
+fs.writeFileSync(filePath, content, 'utf8');
 
 console.log(`\nCreated new post: "${title}"`);
-console.log(`File path: ${path.relative(rootDir, filePath)}`);
-console.log(`Images dir: ${path.relative(rootDir, imagesDir)}/\n`);
+console.log(`File:   ${path.relative(rootDir, filePath)}`);
+console.log(`Images: ${path.relative(rootDir, imagesDir)}/\n`);
