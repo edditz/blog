@@ -1,0 +1,39 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getCollection } from 'astro:content'
+import { languages } from '@/i18n/ui'
+import { useTranslations } from '@/i18n/utils'
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({ params: { lang } }))
+}
+
+const { lang } = Astro.params
+const t = useTranslations(lang as keyof typeof languages)
+
+const posts = await getCollection('blog', ({ data }) => {
+  return data.lang === lang && !data.draft
+})
+
+const categories = [...new Set(posts.map((post) => post.data.category))]
+const categoryCounts = categories.map((category) => ({
+  name: category,
+  count: posts.filter((post) => post.data.category === category).length,
+}))
+---
+
+<BaseLayout title={t('list.categories')} description={t('list.categories')}>
+  <h1 class="text-3xl font-bold mb-8 text-primary">{t('list.categories')}</h1>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {categoryCounts.map(({ name, count }) => (
+      <a
+        href={`/${lang}/categories/${name}/`}
+        class="p-4 bg-card-bg border border-border rounded-lg hover:border-accent hover:shadow-md transition-all"
+      >
+        <h2 class="text-lg font-semibold text-primary">{name}</h2>
+        <p class="text-sm text-secondary">{count} {t('list.posts')}</p>
+      </a>
+    ))}
+  </div>
+</BaseLayout>
