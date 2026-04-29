@@ -105,14 +105,6 @@
     --radius-xl: calc(var(--radius) * 1.4);
 }
 
-@media (pointer: fine) {
-    html.has-custom-cursor,
-    html.has-custom-cursor button,
-    html.has-custom-cursor a {
-        cursor: none;
-    }
-}
-
 .theme-transition::view-transition-group(root),
 .theme-transition::view-transition-old(root),
 .theme-transition::view-transition-new(root) {
