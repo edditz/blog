@@ -1,0 +1,74 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getCollection } from 'astro:content'
+import { getLangFromUrl, useTranslations } from '@/i18n/utils'
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog')
+  return posts.map((post) => ({
+    params: {
+      lang: post.data.lang,
+      slug: post.slug,
+    },
+    props: { post },
+  }))
+}
+
+const { post } = Astro.props
+const lang = getLangFromUrl(Astro.url)
+const t = useTranslations(lang)
+
+const { Content } = await post.render()
+
+const dateStr = post.data.pubDate.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+
+const updatedStr = post.data.updatedDate?.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  image={post.data.image}
+  article
+>
+  <article class="prose prose-lg dark:prose-invert max-w-none">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold mb-4 text-primary">{post.data.title}</h1>
+
+      <div class="flex flex-wrap items-center gap-4 text-sm text-secondary">
+        <time datetime={post.data.pubDate.toISOString()}>
+          {t('post.publishedAt')} {dateStr}
+        </time>
+
+        {updatedStr && (
+          <span>
+            {t('post.updatedAt')} {updatedStr}
+          </span>
+        )}
+
+        <span>{t('post.category')}: {post.data.category}</span>
+      </div>
+
+      <div class="flex flex-wrap gap-2 mt-4">
+        {post.data.tags.map((tag) => (
+          <a
+            href={`/${lang}/tags/${tag}/`}
+            class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-secondary rounded hover:bg-accent hover:text-white transition-colors"
+          >
+            #{tag}
+          </a>
+        ))}
+      </div>
+    </header>
+
+    <Content />
+  </article>
+</BaseLayout>
