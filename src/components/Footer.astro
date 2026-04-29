@@ -1,0 +1,20 @@
+---
+import { getLangFromUrl, useTranslations } from '@/i18n/utils'
+
+const lang = getLangFromUrl(Astro.url)
+const t = useTranslations(lang)
+const year = new Date().getFullYear()
+---
+
+<footer class="border-t border-border mt-auto">
+  <div class="max-w-4xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="text-sm text-secondary">
+      &copy; {year} {t('site.title')}. All rights reserved.
+    </p>
+    <div class="flex items-center gap-4">
+      <a href={`/${lang}/rss.xml`} class="text-sm text-secondary hover:text-accent transition-colors">
+        RSS
+      </a>
+    </div>
+  </div>
+</footer>
