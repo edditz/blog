@@ -1,0 +1,38 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getCollection } from 'astro:content'
+import { languages } from '@/i18n/ui'
+import { useTranslations } from '@/i18n/utils'
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({ params: { lang } }))
+}
+
+const { lang } = Astro.params
+const t = useTranslations(lang as keyof typeof languages)
+
+const posts = await getCollection('blog', ({ data }) => {
+  return data.lang === lang && !data.draft
+})
+
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))]
+const tagCounts = tags.map((tag) => ({
+  name: tag,
+  count: posts.filter((post) => post.data.tags.includes(tag)).length,
+}))
+---
+
+<BaseLayout title={t('list.tags')} description={t('list.tags')}>
+  <h1 class="text-3xl font-bold mb-8 text-primary">{t('list.tags')}</h1>
+
+  <div class="flex flex-wrap gap-4">
+    {tagCounts.map(({ name, count }) => (
+      <a
+        href={`/${lang}/tags/${name}/`}
+        class="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-accent hover:text-white transition-colors"
+      >
+        #{name} ({count})
+      </a>
+    ))}
+  </div>
+</BaseLayout>
