@@ -16,9 +16,9 @@ GitHub Actions workflow: `.github/workflows/deploy.yml`
 ### Build Steps
 
 1. Checkout code
-2. Setup Node.js 20
+2. Setup Node.js 22
 3. `npm install`
-4. `npm run build` (generates `dist/` + Pagefind index)
+4. `npm run build` (generates `dist/`)
 5. Upload `dist/` to OSS bucket
 
 ### Required Secrets
@@ -40,6 +40,7 @@ npm run build
 ## Post-Deploy Verification
 
 - Check site loads at production URL
-- Verify search works (Pagefind index must be accessible)
-- Test both `/zh/` and `/en/` routes
+- Verify Cmd+K search works
 - Confirm dark mode toggle works
+- Test RSS feed at `/feed.xml`
+- Check sitemap at `/sitemap-index.xml`

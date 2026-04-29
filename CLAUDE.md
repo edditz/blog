@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A bilingual (Chinese/English) personal blog built with Astro 5.x, Tailwind CSS 3.x, and Pagefind for search. Deployed to Aliyun OSS via GitHub Actions.
+Personal blog built with Astro 6, Tailwind CSS v4, and the Serene Ink theme.
+Deployed to Aliyun OSS via GitHub Actions.
 
 → [AGENTS.md](AGENTS.md) for full project map
 
@@ -12,18 +13,18 @@ A bilingual (Chinese/English) personal blog built with Astro 5.x, Tailwind CSS 3
 
 ```bash
 npm run dev          # Start dev server
-npm run build        # Build + generate Pagefind index
+npm run build        # Build static site
 npm run preview      # Preview production build
-npm run check        # Astro type checking
+npm run new-post     # Scaffold a new blog post
 ```
 
 ## Key Files
 
-- `src/i18n/ui.ts` - all UI translations (add new translation keys here)
-- `src/i18n/utils.ts` - language detection and translation helpers
-- `src/content/config.ts` - blog schema definition
-- `src/styles/global.css` - CSS variables for theming
-- `tailwind.config.js` - custom colors/fonts using CSS variables
+- `src/config.ts` - Site configuration (title, author, nav, socials)
+- `src/content.config.ts` - Content collection schema
+- `src/styles/global.css` - Tailwind v4 CSS-first config + theme variables
+- `src/layouts/Layout.astro` - Main layout (navbar, search, dark mode)
+- `src/utils/date.ts` - Date parsing (MM/DD/YYYY format)
 
 ## Documentation
 

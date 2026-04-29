@@ -1,3 +1,8 @@
 ---
-return Astro.redirect('/zh/')
+import Writing from "@/components/Writing.astro";
+import Layout from "@/layouts/Layout.astro";
 ---
+
+<Layout image="/images/home.webp">
+    <Writing page={1} />
+</Layout>

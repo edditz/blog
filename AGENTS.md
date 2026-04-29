@@ -1,19 +1,21 @@
 # My Blog
 
-Bilingual (zh/en) personal blog built with Astro 5, Tailwind CSS, and Pagefind.
+Personal blog built with Astro 6, Tailwind CSS v4, and the Serene Ink theme.
 
 ## Quick Start
 
 ```bash
 npm install
 npm run dev        # Dev server
-npm run build      # Build + Pagefind index
-npm run check      # Type check
+npm run build      # Build static site
+npm run new-post   # Scaffold new post
 ```
 
 ## Architecture
 
-Astro static site with i18n routing (`/{lang}/...`). Content in Markdown via Astro collections. Dark mode via CSS variables + `data-theme` attribute.
+Astro 6 static site with Content Layer API. Posts in `src/posts/{year}/*.mdx`.
+Cmd+K client-side search. Dark mode via `.dark` class on `<html>`.
+View transitions via ClientRouter.
 
 → [docs/architecture.md](docs/architecture.md)
 
@@ -21,20 +23,24 @@ Astro static site with i18n routing (`/{lang}/...`). Content in Markdown via Ast
 
 ```
 src/
-├── components/     # Astro components (Header, Footer, PostCard, Search, etc.)
-├── content/blog/   # Blog posts: {zh,en}/ directories
-├── i18n/           # Translations (ui.ts) and utilities (utils.ts)
-├── layouts/        # BaseLayout.astro
-├── pages/          # Routes: [lang]/ param for all pages
-└── styles/         # global.css with CSS variables for theming
+├── assets/images/     # Image assets for components
+├── components/        # Astro components (Author, Writing, UI components, etc.)
+├── content.config.ts  # Content collection schema (glob loader)
+├── layouts/           # Layout.astro (main layout with navbar, search, etc.)
+├── pages/             # Routes (index, about, posts/[...slug], tags, etc.)
+├── posts/             # Blog posts: {year}/*.mdx
+├── scripts/           # cursor.ts (custom cursor effect)
+├── styles/            # global.css (Tailwind v4 CSS-first config)
+├── types.ts           # TypeScript interfaces
+└── utils/             # date.ts, reading-time.ts
 ```
 
 ## Key Conventions
 
-1. **Language in URL**: All routes are `/{lang}/...` — extract lang with `getLangFromUrl()`
-2. **Translations**: Add keys to `src/i18n/ui.ts` for both `zh` and `en`
-3. **Blog posts**: Place in `src/content/blog/{lang}/`, must include `lang` in frontmatter
-4. **Theming**: Use CSS variables from `global.css`, not hardcoded colors
+1. **Posts**: Place in `src/posts/{year}/`, use MM/DD/YYYY date format
+2. **Frontmatter**: `title`, `date`, `frontmatter` (description), `tags`, `draft`, `updatedDate`
+3. **Theming**: CSS variables in global.css, dark mode via `.dark` class
+4. **Search**: Cmd+K search powered by search.json.ts endpoint
 5. **Path alias**: `@/` → `src/`
 
 ## Documentation Map
@@ -44,13 +50,3 @@ src/
 | System design | [docs/architecture.md](docs/architecture.md) |
 | Blog post format | [docs/content-guide.md](docs/content-guide.md) |
 | Deployment | [docs/deployment.md](docs/deployment.md) |
-
-## Common Tasks
-
-| Task | Files/Commands |
-|------|----------------|
-| Add blog post | `src/content/blog/{lang}/*.md` → see [content-guide.md](docs/content-guide.md) |
-| Add translation | `src/i18n/ui.ts` |
-| Change theme | `src/styles/global.css` + `tailwind.config.js` |
-| Modify layout | `src/layouts/BaseLayout.astro` |
-| Type check | `npm run check` |
