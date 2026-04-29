@@ -1,0 +1,37 @@
+name: Deploy to Aliyun OSS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to OSS
+        uses: manyuanrong/setup-ossutil@v3.0
+        with:
+          access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+          bucket: ${{ secrets.OSS_BUCKET }}
+          region: ${{ secrets.OSS_REGION }}
+
+      - name: Upload to OSS
+        run: |
+          ossutil cp -r dist/ oss://${{ secrets.OSS_BUCKET }}/ --update
+          ossutil set-meta oss://${{ secrets.OSS_BUCKET }}/ --update --headers "Cache-Control:max-age=86400"
