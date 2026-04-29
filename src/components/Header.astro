@@ -1,0 +1,45 @@
+---
+import LanguageSwitcher from './LanguageSwitcher.astro'
+import ThemeToggle from './ThemeToggle.astro'
+import { getLangFromUrl, useTranslations } from '@/i18n/utils'
+
+const lang = getLangFromUrl(Astro.url)
+const t = useTranslations(lang)
+
+const navItems = [
+  { href: `/${lang}/`, label: t('nav.home') },
+  { href: `/${lang}/blog/`, label: t('nav.blog') },
+  { href: `/${lang}/tags/`, label: t('nav.tags') },
+  { href: `/${lang}/categories/`, label: t('nav.categories') },
+]
+---
+
+<header class="sticky top-0 z-50 bg-nav-bg/80 backdrop-blur-sm border-b border-border">
+  <nav class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+    <a href={`/${lang}/`} class="text-xl font-bold text-primary hover:text-accent transition-colors">
+      {t('site.title')}
+    </a>
+
+    <div class="flex items-center gap-6">
+      <ul class="flex items-center gap-4">
+        {navItems.map(({ href, label }) => (
+          <li>
+            <a
+              href={href}
+              class={`text-sm font-medium transition-colors hover:text-accent ${
+                Astro.url.pathname === href ? 'text-accent' : 'text-text'
+              }`}
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <div class="flex items-center gap-2">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
+    </div>
+  </nav>
+</header>

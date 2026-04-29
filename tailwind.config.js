@@ -10,6 +10,10 @@ export default {
         accent: 'var(--color-accent)',
         bg: 'var(--color-bg)',
         text: 'var(--color-text)',
+        'code-bg': 'var(--color-code-bg)',
+        border: 'var(--color-border)',
+        'card-bg': 'var(--color-card-bg)',
+        'nav-bg': 'var(--color-nav-bg)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
