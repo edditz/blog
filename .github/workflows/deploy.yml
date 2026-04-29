@@ -29,10 +29,11 @@ jobs:
         with:
           access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
           access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
-          bucket: ${{ secrets.OSS_BUCKET }}
-          region: ${{ secrets.OSS_REGION }}
+          endpoint: ${{ secrets.OSS_ENDPOINT }}
 
       - name: Upload to OSS
         run: |
           ossutil cp -r dist/ oss://${{ secrets.OSS_BUCKET }}/ --update
           ossutil set-meta oss://${{ secrets.OSS_BUCKET }}/ --update --headers "Cache-Control:max-age=86400"
+        env:
+          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
