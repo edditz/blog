@@ -37,6 +37,8 @@ const day = String(today.getDate()).padStart(2, '0');
 const year = today.getFullYear();
 const formattedDate = `${month}/${day}/${year}`;
 
+const imagesDir = path.join(postsDir, `${slug}-images`);
+
 const content = `---
 title: "${title}"
 date: "${formattedDate}"
@@ -51,6 +53,8 @@ Write your post content here!
 `;
 
 fs.writeFileSync(filePath, content, 'utf8');
+fs.mkdirSync(imagesDir, { recursive: true });
 
 console.log(`\nCreated new post: "${title}"`);
-console.log(`File path: ${path.relative(rootDir, filePath)}\n`);
+console.log(`File path: ${path.relative(rootDir, filePath)}`);
+console.log(`Images dir: ${path.relative(rootDir, imagesDir)}/\n`);
