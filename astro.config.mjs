@@ -7,7 +7,17 @@ export default defineConfig({
   site: 'https://yourblog.com',
   integrations: [
     tailwind(),
-    sitemap(),
+    sitemap({
+      changefreq: 'weekly',
+      priority: 0.7,
+      lastmod: new Date(),
+    }),
     mdx(),
   ],
+  markdown: {
+    shikiConfig: {
+      theme: 'github-dark',
+      wrap: true,
+    },
+  },
 })
