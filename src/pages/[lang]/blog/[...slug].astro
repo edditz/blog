@@ -5,11 +5,12 @@ import { getLangFromUrl, useTranslations } from '@/i18n/utils'
 import { languages } from '@/i18n/ui'
 
 export async function getStaticPaths() {
+  const langPrefixPattern = new RegExp(`^(${Object.keys(languages).join('|')})/`)
   const posts = await getCollection('blog')
   return posts.map((post) => ({
     params: {
       lang: post.data.lang,
-      slug: post.slug.replace(/^(en|zh)\//, ''),
+      slug: post.slug.replace(langPrefixPattern, ''),
     },
     props: { post },
   }))
