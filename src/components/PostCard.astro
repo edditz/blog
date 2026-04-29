@@ -1,5 +1,5 @@
 ---
-import { getLangFromUrl, useTranslations } from '@/i18n/utils'
+import { getLangFromUrl } from '@/i18n/utils'
 
 interface Props {
   title: string
@@ -13,7 +13,6 @@ interface Props {
 
 const { title, description, pubDate, tags, category, slug, image } = Astro.props
 const lang = getLangFromUrl(Astro.url)
-const t = useTranslations(lang)
 
 const dateStr = pubDate.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
   year: 'numeric',
@@ -28,6 +27,8 @@ const dateStr = pubDate.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
       <img
         src={image}
         alt={title}
+        width="640"
+        height="192"
         class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         loading="lazy"
       />
@@ -58,7 +59,7 @@ const dateStr = pubDate.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
       {tags.map((tag) => (
         <a
           href={`/${lang}/tags/${tag}/`}
-          class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-secondary rounded hover:bg-accent hover:text-white transition-colors"
+          class="px-2 py-1 text-xs bg-tag-bg text-secondary rounded hover:bg-accent hover:text-white transition-colors"
         >
           #{tag}
         </a>

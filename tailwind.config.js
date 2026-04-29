@@ -14,6 +14,7 @@ export default {
         border: 'var(--color-border)',
         'card-bg': 'var(--color-card-bg)',
         'nav-bg': 'var(--color-nav-bg)',
+        'tag-bg': 'var(--color-tag-bg)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

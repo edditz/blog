@@ -12,6 +12,7 @@
   --color-border: #e5e7eb;
   --color-card-bg: #ffffff;
   --color-nav-bg: #ffffff;
+  --color-tag-bg: #f3f4f6;
 }
 
 [data-theme="dark"] {
@@ -24,6 +25,7 @@
   --color-border: #334155;
   --color-card-bg: #1e293b;
   --color-nav-bg: #0f172a;
+  --color-tag-bg: #1e293b;
 }
 
 html {
