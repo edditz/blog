@@ -8,10 +8,6 @@ export const GET = async (context) => {
     .filter((p) => p.data.lang === 'zh')
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
 
-  const enPosts = posts
-    .filter((p) => p.data.lang === 'en')
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-
   // 默认返回中文 RSS
   return rss({
     title: '我的博客',
@@ -21,7 +17,7 @@ export const GET = async (context) => {
       title: post.data.title,
       pubDate: post.data.pubDate,
       description: post.data.description,
-      link: `/zh/blog/${post.slug}/`,
+      link: `/zh/blog/${post.slug.replace(/^(zh|en)\//, '')}/`,
       categories: [...post.data.tags, post.data.category],
     })),
     customData: '<language>zh-cn</language>',
