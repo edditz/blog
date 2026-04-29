@@ -33,6 +33,6 @@ jobs:
 
       - name: Upload to OSS
         run: |
-          ossutil cp -r dist/ oss://${{ secrets.OSS_BUCKET }}/ --update
+          ossutil cp -r dist/ oss://${{ secrets.OSS_BUCKET }}/ --update --meta "Content-Type:text/html"
         env:
           OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
