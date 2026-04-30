@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import matter from 'gray-matter'
 import { config } from '../config.js'
-import type { Post, PostMeta } from '@blog-admin/shared'
+import type { Post, PostMeta, PostFrontmatter } from '@blog-admin/shared'
 
 const postsPath = (): string => path.resolve(config.blogRoot, config.postsDir)
 
@@ -46,4 +46,83 @@ export function getPost(slug: string): Post | null {
   const { data, content } = matter(raw)
 
   return { slug, ...data, content } as Post
+}
+
+export function createPost(slug: string, data: PostFrontmatter, content: string): Post {
+  const dir = getPostDir(slug)
+  if (fs.existsSync(dir)) {
+    throw new Error(`Post already exists: ${slug}`)
+  }
+
+  fs.mkdirSync(path.join(dir, 'images'), { recursive: true })
+
+  const frontmatter = [
+    '---',
+    `title: "${data.title}"`,
+    `date: "${data.date}"`,
+    `updatedDate: ""`,
+    `frontmatter: "${data.frontmatter}"`,
+    `tags: [${data.tags.map((t) => `"${t}"`).join(', ')}]`,
+    data.category ? `category: "${data.category}"` : '',
+    `draft: ${data.draft ?? false}`,
+    '---',
+    '',
+    content,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  fs.writeFileSync(getPostFile(slug), frontmatter, 'utf-8')
+
+  return getPost(slug)!
+}
+
+export function updatePost(slug: string, data: PostFrontmatter, content: string): Post {
+  const filePath = getPostFile(slug)
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Post not found: ${slug}`)
+  }
+
+  const frontmatter = [
+    '---',
+    `title: "${data.title}"`,
+    `date: "${data.date}"`,
+    `updatedDate: "${new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}"`,
+    `frontmatter: "${data.frontmatter}"`,
+    `tags: [${data.tags.map((t) => `"${t}"`).join(', ')}]`,
+    data.category ? `category: "${data.category}"` : '',
+    `draft: ${data.draft ?? false}`,
+    '---',
+    '',
+    content,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  fs.writeFileSync(filePath, frontmatter, 'utf-8')
+
+  return getPost(slug)!
+}
+
+export function deletePost(slug: string): void {
+  const dir = getPostDir(slug)
+  if (!fs.existsSync(dir)) {
+    throw new Error(`Post not found: ${slug}`)
+  }
+
+  fs.rmSync(dir, { recursive: true, force: true })
+}
+
+export function publishPost(slug: string): Post {
+  const post = getPost(slug)
+  if (!post) throw new Error(`Post not found: ${slug}`)
+
+  return updatePost(slug, { ...post, draft: false }, post.content)
+}
+
+export function unpublishPost(slug: string): Post {
+  const post = getPost(slug)
+  if (!post) throw new Error(`Post not found: ${slug}`)
+
+  return updatePost(slug, { ...post, draft: true }, post.content)
 }
