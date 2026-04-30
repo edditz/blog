@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { config } from './config.js'
+import postsRouter from './routes/posts.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -10,6 +11,9 @@ const app = express()
 
 app.use(cors())
 app.use(express.json())
+
+// API routes
+app.use('/api/posts', postsRouter)
 
 // Health check
 app.get('/api/health', (_req, res) => {
