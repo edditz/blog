@@ -41,5 +41,5 @@ export default function SourceEditor({ value, onChange }: Props) {
     }
   }, [])
 
-  return <div ref={containerRef} className="min-h-[400px] border rounded-lg overflow-hidden" />
+  return <div ref={containerRef} className="min-h-[400px] border border-default rounded-lg overflow-hidden" />
 }

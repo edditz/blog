@@ -2,14 +2,22 @@ import { useEffect, useState } from 'react'
 import { listTags, renameTag, deleteTag } from '@/api/client'
 import type { Tag } from '@blog-admin/shared'
 import { Pencil, Trash2 } from 'lucide-react'
+import { Button, Input, Modal, Spinner } from '@heroui/react'
 
 export default function TagManager() {
   const [tags, setTags] = useState<Tag[]>([])
   const [editing, setEditing] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const fetchTags = async () => {
-    setTags(await listTags())
+    setLoading(true)
+    try {
+      setTags(await listTags())
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -26,10 +34,19 @@ export default function TagManager() {
     fetchTags()
   }
 
-  const handleDelete = async (name: string) => {
-    if (!confirm(`确定删除标签 "${name}"？这会从所有文章中移除该标签。`)) return
-    await deleteTag(name)
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    await deleteTag(deleteTarget)
+    setDeleteTarget(null)
     fetchTags()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   return (
@@ -39,39 +56,68 @@ export default function TagManager() {
         {tags.map((tag) => (
           <div
             key={tag.name}
-            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
+            className="flex items-center justify-between p-3 bg-surface rounded-lg"
           >
             {editing === tag.name ? (
-              <input
+              <Input
                 autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onBlur={() => handleRename(tag.name)}
                 onKeyDown={(e) => e.key === 'Enter' && handleRename(tag.name)}
-                className="px-2 py-1 border rounded bg-white dark:bg-gray-800"
+                className="w-48"
               />
             ) : (
-              <span className="font-medium">{tag.name}</span>
+              <span className="font-medium text-foreground">{tag.name}</span>
             )}
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500">{tag.count} 篇文章</span>
-              <button
-                onClick={() => {
+              <span className="text-sm text-muted">{tag.count} 篇文章</span>
+              <Button
+                isIconOnly
+                variant="ghost"
+                onPress={() => {
                   setEditing(tag.name)
                   setNewName(tag.name)
                 }}
-                className="text-gray-400 hover:text-blue-600"
               >
                 <Pencil size={16} />
-              </button>
-              <button onClick={() => handleDelete(tag.name)} className="text-gray-400 hover:text-red-600">
+              </Button>
+              <Button
+                isIconOnly
+                variant="ghost"
+                onPress={() => setDeleteTarget(tag.name)}
+              >
                 <Trash2 size={16} />
-              </button>
+              </Button>
             </div>
           </div>
         ))}
-        {tags.length === 0 && <p className="text-gray-500">暂无标签</p>}
+        {tags.length === 0 && <p className="text-muted">暂无标签</p>}
       </div>
+
+      {deleteTarget && (
+        <Modal.Backdrop isOpen onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <Modal.Container size="sm">
+            <Modal.Dialog>
+              <Modal.CloseTrigger />
+              <Modal.Header>
+                <Modal.Heading>确认删除</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p>确定删除标签 &ldquo;{deleteTarget}&rdquo;？这会从所有文章中移除该标签。</p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onPress={() => setDeleteTarget(null)}>
+                  取消
+                </Button>
+                <Button variant="danger" onPress={handleDelete}>
+                  删除
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      )}
     </div>
   )
 }

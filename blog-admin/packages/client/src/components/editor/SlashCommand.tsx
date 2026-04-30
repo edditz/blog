@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Input } from '@heroui/react'
 
 interface SlashItem {
   label: string
@@ -51,30 +52,32 @@ export default function SlashCommand({ items, position, onClose }: Props) {
 
   return (
     <div
-      className="absolute z-50 bg-white dark:bg-gray-900 border rounded-lg shadow-lg w-64 max-h-48 overflow-auto"
+      className="absolute z-50 bg-surface border border-default rounded-lg shadow-lg w-64 max-h-48 overflow-auto"
       style={{ top: position.top, left: position.left }}
     >
-      <input
-        autoFocus
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="搜索组件..."
-        className="w-full px-3 py-2 border-b bg-transparent text-sm outline-none"
-      />
+      <div className="border-b border-default">
+        <Input
+          autoFocus
+          placeholder="搜索组件..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          variant="secondary"
+          className="border-0"
+        />
+      </div>
       {filtered.map((item, i) => (
         <button
           key={item.label}
-          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 ${
-            i === selectedIndex ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+          className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-secondary ${
+            i === selectedIndex ? 'bg-primary/10' : ''
           }`}
           onClick={() => {
             item.action()
             onClose()
           }}
         >
-          <div className="font-medium">{item.label}</div>
-          <div className="text-xs text-gray-500">{item.description}</div>
+          <div className="font-medium text-foreground">{item.label}</div>
+          <div className="text-xs text-muted">{item.description}</div>
         </button>
       ))}
     </div>

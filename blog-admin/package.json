@@ -1,0 +1,13 @@
+{
+  "name": "blog-admin",
+  "private": true,
+  "packageManager": "pnpm@10.28.1",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter @blog-admin/server start"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

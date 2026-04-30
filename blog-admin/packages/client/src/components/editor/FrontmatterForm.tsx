@@ -1,4 +1,5 @@
 import type { PostFrontmatter } from '@blog-admin/shared'
+import { Input, TextField, Checkbox, Label } from '@heroui/react'
 
 interface Props {
   data: PostFrontmatter
@@ -11,32 +12,27 @@ export default function FrontmatterForm({ data, onChange }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-      <div>
-        <label className="block text-sm font-medium mb-1">日期</label>
-        <input
-          type="text"
+    <div className="grid grid-cols-2 gap-4 p-4 bg-surface rounded-lg">
+      <TextField className="w-full">
+        <Label>日期</Label>
+        <Input
+          placeholder="MM/DD/YYYY"
           value={data.date}
           onChange={(e) => update({ date: e.target.value })}
-          placeholder="MM/DD/YYYY"
-          className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
         />
-      </div>
+      </TextField>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">摘要</label>
-        <input
-          type="text"
+      <TextField className="w-full">
+        <Label>摘要</Label>
+        <Input
           value={data.frontmatter}
           onChange={(e) => update({ frontmatter: e.target.value })}
-          className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
         />
-      </div>
+      </TextField>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">标签（逗号分隔）</label>
-        <input
-          type="text"
+      <TextField className="w-full">
+        <Label>标签（逗号分隔）</Label>
+        <Input
           value={data.tags.join(', ')}
           onChange={(e) =>
             update({
@@ -46,29 +42,30 @@ export default function FrontmatterForm({ data, onChange }: Props) {
                 .filter(Boolean),
             })
           }
-          className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
         />
-      </div>
+      </TextField>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">分类</label>
-        <input
-          type="text"
+      <TextField className="w-full">
+        <Label>分类</Label>
+        <Input
           value={data.category || ''}
           onChange={(e) => update({ category: e.target.value || undefined })}
-          className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
         />
-      </div>
+      </TextField>
 
       <div className="col-span-2">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={data.draft ?? false}
-            onChange={(e) => update({ draft: e.target.checked })}
-          />
-          <span className="text-sm">草稿</span>
-        </label>
+        <Checkbox
+          isSelected={data.draft ?? false}
+          onChange={(checked) => update({ draft: checked })}
+          id="draft-toggle"
+        >
+          <Checkbox.Control>
+            <Checkbox.Indicator />
+          </Checkbox.Control>
+          <Checkbox.Content>
+            <Label htmlFor="draft-toggle">草稿</Label>
+          </Checkbox.Content>
+        </Checkbox>
       </div>
     </div>
   )

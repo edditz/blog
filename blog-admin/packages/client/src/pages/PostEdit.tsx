@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Image } from 'lucide-react'
+import { Button, Input, Spinner } from '@heroui/react'
 import { getPost, createPost, updatePost } from '@/api/client'
 import FrontmatterForm from '@/components/editor/FrontmatterForm'
 import SourceEditor from '@/components/editor/SourceEditor'
@@ -73,40 +74,40 @@ export default function PostEdit() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={() => navigate('/posts')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
+        <Button variant="ghost" onPress={() => navigate('/posts')}>
           <ArrowLeft size={18} />
           返回
-        </button>
+        </Button>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowImages(true)}
-            className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900"
-            disabled={!slug}
+          <Button
+            variant="outline"
+            isDisabled={!slug}
+            onPress={() => setShowImages(true)}
           >
             <Image size={16} />
             图片
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          </Button>
+          <Button
+            isPending={saving}
+            onPress={handleSave}
           >
-            <Save size={16} />
-            {saving ? '保存中...' : '保存'}
-          </button>
+            {({ isPending }) => (
+              <>
+                {isPending ? <Spinner color="current" size="sm" /> : <Save size={16} />}
+                {isPending ? '保存中...' : '保存'}
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
       <div className="mb-4">
-        <input
-          type="text"
+        <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="文章标题"
-          className="text-3xl font-bold w-full bg-transparent border-none outline-none"
+          className="text-3xl font-bold"
+          variant="secondary"
         />
       </div>
 

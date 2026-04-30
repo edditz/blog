@@ -1,75 +1,84 @@
 import type { PostMeta } from '@blog-admin/shared'
+import type { Selection } from '@heroui/react'
 import { useNavigate } from 'react-router-dom'
+import { Table, Checkbox, Chip } from '@heroui/react'
 
 interface Props {
   posts: PostMeta[]
-  selected: Set<string>
-  onSelect: (slug: string) => void
-  onSelectAll: () => void
+  selectedKeys: Selection
+  onSelectionChange: (keys: Selection) => void
 }
 
-export default function PostTable({ posts, selected, onSelect, onSelectAll }: Props) {
+export default function PostTable({ posts, selectedKeys, onSelectionChange }: Props) {
   const navigate = useNavigate()
 
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-gray-200 dark:border-gray-800">
-          <th className="py-3 px-2 text-left">
-            <input
-              type="checkbox"
-              checked={selected.size === posts.length && posts.length > 0}
-              onChange={onSelectAll}
-            />
-          </th>
-          <th className="py-3 px-2 text-left">标题</th>
-          <th className="py-3 px-2 text-left">标签</th>
-          <th className="py-3 px-2 text-left">日期</th>
-          <th className="py-3 px-2 text-left">状态</th>
-        </tr>
-      </thead>
-      <tbody>
-        {posts.map((post) => (
-          <tr
-            key={post.slug}
-            className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
-            onClick={() => navigate(`/posts/${post.slug}/edit`)}
-          >
-            <td className="py-3 px-2" onClick={(e) => e.stopPropagation()}>
-              <input
-                type="checkbox"
-                checked={selected.has(post.slug)}
-                onChange={() => onSelect(post.slug)}
-              />
-            </td>
-            <td className="py-3 px-2 font-medium">{post.title}</td>
-            <td className="py-3 px-2">
-              <div className="flex gap-1 flex-wrap">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+    <Table>
+      <Table.ScrollContainer>
+        <Table.Content
+          aria-label="文章列表"
+          className="min-w-[600px]"
+          selectedKeys={selectedKeys}
+          selectionMode="multiple"
+          onSelectionChange={onSelectionChange}
+        >
+          <Table.Header>
+            <Table.Column className="pr-0">
+              <Checkbox aria-label="全选" slot="selection">
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+              </Checkbox>
+            </Table.Column>
+            <Table.Column isRowHeader>标题</Table.Column>
+            <Table.Column>标签</Table.Column>
+            <Table.Column>日期</Table.Column>
+            <Table.Column>状态</Table.Column>
+          </Table.Header>
+          <Table.Body>
+            {posts.map((post) => (
+              <Table.Row key={post.slug} id={post.slug}>
+                <Table.Cell className="pr-0">
+                  <Checkbox
+                    aria-label={`选择 ${post.title}`}
+                    slot="selection"
+                    variant="secondary"
                   >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </td>
-            <td className="py-3 px-2 text-gray-500">{post.date}</td>
-            <td className="py-3 px-2">
-              <span
-                className={`px-2 py-0.5 rounded text-xs ${
-                  post.draft
-                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                    : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                }`}
-              >
-                {post.draft ? '草稿' : '已发布'}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                  </Checkbox>
+                </Table.Cell>
+                <Table.Cell
+                  className="font-medium cursor-pointer"
+                  onClick={() => navigate(`/posts/${post.slug}/edit`)}
+                >
+                  {post.title}
+                </Table.Cell>
+                <Table.Cell>
+                  <div className="flex gap-1 flex-wrap">
+                    {post.tags.map((tag) => (
+                      <Chip key={tag} size="sm" variant="soft">
+                        {tag}
+                      </Chip>
+                    ))}
+                  </div>
+                </Table.Cell>
+                <Table.Cell className="text-muted">{post.date}</Table.Cell>
+                <Table.Cell>
+                  <Chip
+                    size="sm"
+                    color={post.draft ? 'warning' : 'success'}
+                    variant="soft"
+                  >
+                    {post.draft ? '草稿' : '已发布'}
+                  </Chip>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Content>
+      </Table.ScrollContainer>
+    </Table>
   )
 }

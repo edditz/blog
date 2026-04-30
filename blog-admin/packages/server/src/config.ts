@@ -8,10 +8,20 @@ export interface Config {
 }
 
 function loadConfig(): Config {
-  const configPath = path.resolve(process.cwd(), 'blog-admin.config.json')
+  // Walk up from cwd to find blog-admin.config.json (monorepo root)
+  let dir = process.cwd()
+  let configPath = ''
+  while (dir !== path.dirname(dir)) {
+    const candidate = path.join(dir, 'blog-admin.config.json')
+    if (fs.existsSync(candidate)) {
+      configPath = candidate
+      break
+    }
+    dir = path.dirname(dir)
+  }
 
   let fileConfig: Partial<Config> = {}
-  if (fs.existsSync(configPath)) {
+  if (configPath) {
     fileConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
   }
 

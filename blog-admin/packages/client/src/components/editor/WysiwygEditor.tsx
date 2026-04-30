@@ -75,7 +75,7 @@ export default function WysiwygEditor({ value, onChange }: Props) {
   }, [editor])
 
   return (
-    <div className="border rounded-lg overflow-hidden relative">
+    <div className="border border-default rounded-lg overflow-hidden relative">
       <EditorToolbar />
       <EditorContent editor={editor} className="p-4 min-h-[400px] prose dark:prose-invert max-w-none" />
       {slashMenu && (
