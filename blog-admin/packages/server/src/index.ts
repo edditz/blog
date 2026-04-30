@@ -6,6 +6,7 @@ import { config } from './config.js'
 import postsRouter from './routes/posts.js'
 import tagsRouter from './routes/tags.js'
 import categoriesRouter from './routes/categories.js'
+import imagesRouter from './routes/images.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -18,6 +19,7 @@ app.use(express.json())
 app.use('/api/posts', postsRouter)
 app.use('/api/tags', tagsRouter)
 app.use('/api/categories', categoriesRouter)
+app.use('/api/images/:slug', imagesRouter)
 
 // Health check
 app.get('/api/health', (_req, res) => {
