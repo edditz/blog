@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, Image } from 'lucide-react'
 import { getPost, createPost, updatePost } from '@/api/client'
 import FrontmatterForm from '@/components/editor/FrontmatterForm'
 import SourceEditor from '@/components/editor/SourceEditor'
 import WysiwygEditor from '@/components/editor/WysiwygEditor'
 import ModeSwitch from '@/components/editor/ModeSwitch'
+import ImageManager from '@/components/editor/ImageManager'
 import type { PostFrontmatter } from '@blog-admin/shared'
 
 const emptyFrontmatter: PostFrontmatter = {
@@ -31,6 +32,7 @@ export default function PostEdit() {
   const [content, setContent] = useState('')
   const [mode, setMode] = useState<'source' | 'wysiwyg'>('source')
   const [saving, setSaving] = useState(false)
+  const [showImages, setShowImages] = useState(false)
 
   useEffect(() => {
     if (isEdit && slug) {
@@ -78,14 +80,24 @@ export default function PostEdit() {
           <ArrowLeft size={18} />
           返回
         </button>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          <Save size={16} />
-          {saving ? '保存中...' : '保存'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowImages(true)}
+            className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900"
+            disabled={!slug}
+          >
+            <Image size={16} />
+            图片
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            <Save size={16} />
+            {saving ? '保存中...' : '保存'}
+          </button>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -110,6 +122,17 @@ export default function PostEdit() {
         <SourceEditor value={content} onChange={setContent} />
       ) : (
         <WysiwygEditor value={content} onChange={setContent} />
+      )}
+
+      {showImages && slug && (
+        <ImageManager
+          slug={slug}
+          onInsert={(url, alt) => {
+            setContent((prev) => prev + `\n![${alt}](${url})\n`)
+            setShowImages(false)
+          }}
+          onClose={() => setShowImages(false)}
+        />
       )}
     </div>
   )
