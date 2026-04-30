@@ -4,6 +4,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { config } from './config.js'
 import postsRouter from './routes/posts.js'
+import tagsRouter from './routes/tags.js'
+import categoriesRouter from './routes/categories.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -14,6 +16,8 @@ app.use(express.json())
 
 // API routes
 app.use('/api/posts', postsRouter)
+app.use('/api/tags', tagsRouter)
+app.use('/api/categories', categoriesRouter)
 
 // Health check
 app.get('/api/health', (_req, res) => {
