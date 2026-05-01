@@ -16,6 +16,9 @@ npm run dev          # Start dev server
 npm run build        # Build static site
 npm run preview      # Preview production build
 npm run new-post     # Scaffold a new blog post
+
+# Blog Admin (独立项目)
+cd blog-admin && pnpm dev   # Start admin backend + frontend
 ```
 
 ## Key Files
@@ -33,6 +36,10 @@ npm run new-post     # Scaffold a new blog post
 | System design | [docs/architecture.md](docs/architecture.md) |
 | Blog post format | [docs/content-guide.md](docs/content-guide.md) |
 | Deployment | [docs/deployment.md](docs/deployment.md) |
+| Coding conventions | [docs/conventions.md](docs/conventions.md) |
+| Component architecture | [src/components/DESIGN_NOTES.md](src/components/DESIGN_NOTES.md) |
+| Layout architecture | [src/layouts/DESIGN_NOTES.md](src/layouts/DESIGN_NOTES.md) |
+| Blog admin system | [docs/blog-admin.md](docs/blog-admin.md) |
 
 ## Path Aliases
 
