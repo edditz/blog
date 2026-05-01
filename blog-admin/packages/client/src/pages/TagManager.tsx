@@ -4,6 +4,7 @@ import type { Tag } from '@blog-admin/shared'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button, Input, Modal, Spinner, Table } from '@heroui/react'
 import EmptyState from '@/components/EmptyState'
+import TablePagination from '@/components/TablePagination'
 
 export default function TagManager() {
   const [tags, setTags] = useState<Tag[]>([])
@@ -11,6 +12,8 @@ export default function TagManager() {
   const [newName, setNewName] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const fetchTags = async () => {
     setLoading(true)
@@ -54,6 +57,9 @@ export default function TagManager() {
     return <EmptyState message="暂无标签" />
   }
 
+  const totalPages = Math.max(1, Math.ceil(tags.length / pageSize))
+  const pagedTags = tags.slice((page - 1) * pageSize, page * pageSize)
+
   return (
     <div>
       <Table aria-label="标签管理">
@@ -65,7 +71,7 @@ export default function TagManager() {
               <Table.Column className="w-[100px]">操作</Table.Column>
             </Table.Header>
             <Table.Body>
-              {tags.map((tag) => (
+              {pagedTags.map((tag) => (
                 <Table.Row key={tag.name}>
                   <Table.Cell>
                     {editing === tag.name ? (
@@ -109,6 +115,15 @@ export default function TagManager() {
           </Table.Content>
         </Table.ScrollContainer>
       </Table>
+
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        total={tags.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+      />
 
       {deleteTarget && (
         <Modal.Backdrop isOpen onOpenChange={(open) => !open && setDeleteTarget(null)}>

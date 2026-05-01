@@ -9,7 +9,7 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="w-56 bg-surface border-r border-default min-h-screen p-4">
+    <aside className="w-56 bg-surface border-r border-default h-screen sticky top-0 p-4 overflow-hidden">
       <h1 className="text-xl font-bold mb-6 px-2 text-foreground">Blog Admin</h1>
       <nav className="flex flex-col gap-1">
         {navItems.map(({ to, label, icon: Icon }) => (

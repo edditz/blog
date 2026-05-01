@@ -4,6 +4,7 @@ import type { Category } from '@blog-admin/shared'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button, Input, Modal, Spinner, Table } from '@heroui/react'
 import EmptyState from '@/components/EmptyState'
+import TablePagination from '@/components/TablePagination'
 
 export default function CategoryManager() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -11,6 +12,8 @@ export default function CategoryManager() {
   const [newName, setNewName] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const fetchCategories = async () => {
     setLoading(true)
@@ -54,6 +57,9 @@ export default function CategoryManager() {
     return <EmptyState message="暂无分类" />
   }
 
+  const totalPages = Math.max(1, Math.ceil(categories.length / pageSize))
+  const pagedCategories = categories.slice((page - 1) * pageSize, page * pageSize)
+
   return (
     <div>
       <Table aria-label="分类管理">
@@ -65,7 +71,7 @@ export default function CategoryManager() {
               <Table.Column className="w-[100px]">操作</Table.Column>
             </Table.Header>
             <Table.Body>
-              {categories.map((cat) => (
+              {pagedCategories.map((cat) => (
                 <Table.Row key={cat.name}>
                   <Table.Cell>
                     {editing === cat.name ? (
@@ -109,6 +115,15 @@ export default function CategoryManager() {
           </Table.Content>
         </Table.ScrollContainer>
       </Table>
+
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        total={categories.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+      />
 
       {deleteTarget && (
         <Modal.Backdrop isOpen onOpenChange={(open) => !open && setDeleteTarget(null)}>

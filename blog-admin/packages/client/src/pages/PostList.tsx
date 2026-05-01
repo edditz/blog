@@ -5,6 +5,7 @@ import { Button, InputGroup, TextField, Select, Label, ListBox, Spinner } from '
 import type { Selection } from '@heroui/react'
 import { listPosts, batchAction, deletePost } from '@/api/client'
 import PostTable from '@/components/posts/PostTable'
+import TablePagination from '@/components/TablePagination'
 import type { PostMeta } from '@blog-admin/shared'
 
 export default function PostList() {
@@ -14,6 +15,8 @@ export default function PostList() {
   const [status, setStatus] = useState<'all' | 'draft' | 'published'>('all')
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set())
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
@@ -48,6 +51,13 @@ export default function PostList() {
     await deletePost(slug)
     fetchPosts()
   }
+
+  const totalPages = Math.max(1, Math.ceil(posts.length / pageSize))
+  const pagedPosts = posts.slice((page - 1) * pageSize, page * pageSize)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, status, pageSize])
 
   return (
     <div>
@@ -123,7 +133,17 @@ export default function PostList() {
       ) : posts.length === 0 ? (
         <div className="text-center py-10 text-muted">暂无文章</div>
       ) : (
-        <PostTable posts={posts} selectedKeys={selectedKeys} onSelectionChange={setSelectedKeys} onDelete={handleDelete} />
+        <>
+          <PostTable posts={pagedPosts} selectedKeys={selectedKeys} onSelectionChange={setSelectedKeys} onDelete={handleDelete} />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            total={posts.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          />
+        </>
       )}
     </div>
   )
