@@ -6,7 +6,7 @@
 set -e
 
 ADMIN_DIR="$(cd "$(dirname "$0")" && pwd)/blog-admin"
-PORTS=(3001 5173)
+PORTS=(3001 5173 4747)
 
 # 清理占用指定端口的进程
 kill_port() {

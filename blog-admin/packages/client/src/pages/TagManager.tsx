@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { listTags, renameTag, deleteTag } from '@/api/client'
 import type { Tag } from '@blog-admin/shared'
 import { Pencil, Trash2 } from 'lucide-react'
-import { Button, Input, Modal, Spinner } from '@heroui/react'
+import { Button, Input, Modal, Spinner, Table } from '@heroui/react'
+import EmptyState from '@/components/EmptyState'
 
 export default function TagManager() {
   const [tags, setTags] = useState<Tag[]>([])
@@ -49,51 +50,65 @@ export default function TagManager() {
     )
   }
 
+  if (tags.length === 0) {
+    return <EmptyState message="暂无标签" />
+  }
+
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">标签管理</h2>
-      <div className="space-y-2">
-        {tags.map((tag) => (
-          <div
-            key={tag.name}
-            className="flex items-center justify-between p-3 bg-surface rounded-lg"
-          >
-            {editing === tag.name ? (
-              <Input
-                autoFocus
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onBlur={() => handleRename(tag.name)}
-                onKeyDown={(e) => e.key === 'Enter' && handleRename(tag.name)}
-                className="w-48"
-              />
-            ) : (
-              <span className="font-medium text-foreground">{tag.name}</span>
-            )}
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted">{tag.count} 篇文章</span>
-              <Button
-                isIconOnly
-                variant="ghost"
-                onPress={() => {
-                  setEditing(tag.name)
-                  setNewName(tag.name)
-                }}
-              >
-                <Pencil size={16} />
-              </Button>
-              <Button
-                isIconOnly
-                variant="ghost"
-                onPress={() => setDeleteTarget(tag.name)}
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          </div>
-        ))}
-        {tags.length === 0 && <p className="text-muted">暂无标签</p>}
-      </div>
+      <Table aria-label="标签管理">
+        <Table.ScrollContainer>
+          <Table.Content className="table-fixed">
+            <Table.Header>
+              <Table.Column isRowHeader className="w-[60%]">标签名</Table.Column>
+              <Table.Column className="w-[100px]">文章数</Table.Column>
+              <Table.Column className="w-[100px]">操作</Table.Column>
+            </Table.Header>
+            <Table.Body>
+              {tags.map((tag) => (
+                <Table.Row key={tag.name}>
+                  <Table.Cell>
+                    {editing === tag.name ? (
+                      <Input
+                        autoFocus
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onBlur={() => handleRename(tag.name)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleRename(tag.name)}
+                        className="w-full max-w-full"
+                      />
+                    ) : (
+                      <span className="font-medium text-foreground">{tag.name}</span>
+                    )}
+                  </Table.Cell>
+                  <Table.Cell>{tag.count} 篇文章</Table.Cell>
+                  <Table.Cell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        onPress={() => {
+                          setEditing(tag.name)
+                          setNewName(tag.name)
+                        }}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        onPress={() => setDeleteTarget(tag.name)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
+      </Table>
 
       {deleteTarget && (
         <Modal.Backdrop isOpen onOpenChange={(open) => !open && setDeleteTarget(null)}>

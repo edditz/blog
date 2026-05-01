@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search } from 'lucide-react'
-import { Button, Input, Select, Label, ListBox, Spinner } from '@heroui/react'
+import { Button, InputGroup, TextField, Select, Label, ListBox, Spinner } from '@heroui/react'
 import type { Selection } from '@heroui/react'
-import { listPosts, batchAction } from '@/api/client'
+import { listPosts, batchAction, deletePost } from '@/api/client'
 import PostTable from '@/components/posts/PostTable'
 import type { PostMeta } from '@blog-admin/shared'
 
@@ -44,56 +44,61 @@ export default function PostList() {
     fetchPosts()
   }
 
+  const handleDelete = async (slug: string) => {
+    await deletePost(slug)
+    fetchPosts()
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">文章</h2>
-        <Button onPress={() => navigate('/posts/new')}>
+      <div className="flex gap-3 mb-4 items-center">
+        <TextField className="flex-1 max-w-sm" aria-label="搜索">
+          <InputGroup>
+            <InputGroup.Prefix>
+              <Search size={16} className="text-muted" />
+            </InputGroup.Prefix>
+            <InputGroup.Input
+              placeholder="搜索标题、摘要、标签..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </InputGroup>
+        </TextField>
+        <div className="flex items-center gap-2">
+          <Label>状态</Label>
+          <Select
+            className="w-36"
+            selectedKey={status}
+            onSelectionChange={(key) => {
+              if (key) setStatus(key as typeof status)
+            }}
+          >
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="all" textValue="全部">
+                  全部
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="published" textValue="已发布">
+                  已发布
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="draft" textValue="草稿">
+                  草稿
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
+          </Select>
+        </div>
+        <Button className="ml-auto" onPress={() => navigate('/posts/new')}>
           <Plus size={16} />
           新建文章
         </Button>
-      </div>
-
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted z-10" />
-          <Input
-            fullWidth
-            placeholder="搜索标题、摘要、标签..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <Select
-          className="w-40"
-          selectedKey={status}
-          onSelectionChange={(key) => {
-            if (key) setStatus(key as typeof status)
-          }}
-        >
-          <Label>状态</Label>
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              <ListBox.Item id="all" textValue="全部">
-                全部
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item id="published" textValue="已发布">
-                已发布
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item id="draft" textValue="草稿">
-                草稿
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            </ListBox>
-          </Select.Popover>
-        </Select>
       </div>
 
       {selectedCount > 0 && (
@@ -118,7 +123,7 @@ export default function PostList() {
       ) : posts.length === 0 ? (
         <div className="text-center py-10 text-muted">暂无文章</div>
       ) : (
-        <PostTable posts={posts} selectedKeys={selectedKeys} onSelectionChange={setSelectedKeys} />
+        <PostTable posts={posts} selectedKeys={selectedKeys} onSelectionChange={setSelectedKeys} onDelete={handleDelete} />
       )}
     </div>
   )

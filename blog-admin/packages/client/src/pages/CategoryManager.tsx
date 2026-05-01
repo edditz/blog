@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { listCategories, renameCategory, deleteCategory } from '@/api/client'
 import type { Category } from '@blog-admin/shared'
 import { Pencil, Trash2 } from 'lucide-react'
-import { Button, Input, Modal, Spinner } from '@heroui/react'
+import { Button, Input, Modal, Spinner, Table } from '@heroui/react'
+import EmptyState from '@/components/EmptyState'
 
 export default function CategoryManager() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -49,51 +50,65 @@ export default function CategoryManager() {
     )
   }
 
+  if (categories.length === 0) {
+    return <EmptyState message="暂无分类" />
+  }
+
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">分类管理</h2>
-      <div className="space-y-2">
-        {categories.map((cat) => (
-          <div
-            key={cat.name}
-            className="flex items-center justify-between p-3 bg-surface rounded-lg"
-          >
-            {editing === cat.name ? (
-              <Input
-                autoFocus
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onBlur={() => handleRename(cat.name)}
-                onKeyDown={(e) => e.key === 'Enter' && handleRename(cat.name)}
-                className="w-48"
-              />
-            ) : (
-              <span className="font-medium text-foreground">{cat.name}</span>
-            )}
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted">{cat.count} 篇文章</span>
-              <Button
-                isIconOnly
-                variant="ghost"
-                onPress={() => {
-                  setEditing(cat.name)
-                  setNewName(cat.name)
-                }}
-              >
-                <Pencil size={16} />
-              </Button>
-              <Button
-                isIconOnly
-                variant="ghost"
-                onPress={() => setDeleteTarget(cat.name)}
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          </div>
-        ))}
-        {categories.length === 0 && <p className="text-muted">暂无分类</p>}
-      </div>
+      <Table aria-label="分类管理">
+        <Table.ScrollContainer>
+          <Table.Content className="table-fixed">
+            <Table.Header>
+              <Table.Column isRowHeader className="w-[60%]">分类名</Table.Column>
+              <Table.Column className="w-[100px]">文章数</Table.Column>
+              <Table.Column className="w-[100px]">操作</Table.Column>
+            </Table.Header>
+            <Table.Body>
+              {categories.map((cat) => (
+                <Table.Row key={cat.name}>
+                  <Table.Cell>
+                    {editing === cat.name ? (
+                      <Input
+                        autoFocus
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onBlur={() => handleRename(cat.name)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleRename(cat.name)}
+                        className="w-full max-w-full"
+                      />
+                    ) : (
+                      <span className="font-medium text-foreground">{cat.name}</span>
+                    )}
+                  </Table.Cell>
+                  <Table.Cell>{cat.count} 篇文章</Table.Cell>
+                  <Table.Cell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        onPress={() => {
+                          setEditing(cat.name)
+                          setNewName(cat.name)
+                        }}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      <Button
+                        isIconOnly
+                        variant="ghost"
+                        onPress={() => setDeleteTarget(cat.name)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
+      </Table>
 
       {deleteTarget && (
         <Modal.Backdrop isOpen onOpenChange={(open) => !open && setDeleteTarget(null)}>
