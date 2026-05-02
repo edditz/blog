@@ -36,6 +36,8 @@ export default function SelectionToolbar() {
     const trimmed = linkUrl.trim()
     if (!trimmed) {
       editor.chain().focus().unsetLink().run()
+    } else if (/^(javascript|data|vbscript):/i.test(trimmed)) {
+      return
     } else {
       const href = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
       editor.chain().focus().setLink({ href }).run()
@@ -114,7 +116,7 @@ export default function SelectionToolbar() {
         variant={isActive() ? 'secondary' : 'ghost'}
         onPress={action}
       >
-        <Icon size={15} />
+        <Icon size={16} />
       </Button>
       <Tooltip.Content showArrow placement="bottom">
         {label}
