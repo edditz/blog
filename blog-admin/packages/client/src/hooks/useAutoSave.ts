@@ -4,7 +4,7 @@ import type { PostFrontmatter } from '@blog-admin/shared'
 
 export type SaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
 
-interface UseAutoSaveOptions {
+export interface UseAutoSaveOptions {
   isNew: boolean
   slug: string | undefined
   title: string
@@ -13,7 +13,7 @@ interface UseAutoSaveOptions {
   onSuccess?: (slug: string) => void
 }
 
-interface UseAutoSaveReturn {
+export interface UseAutoSaveReturn {
   status: SaveStatus
   lastSavedAt: Date | null
   triggerSave: () => void
