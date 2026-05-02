@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Image } from 'lucide-react'
-import { Button, Input, Spinner, Drawer } from '@heroui/react'
+import { Button, Spinner, Drawer } from '@heroui/react'
 import { getPost, createPost, updatePost } from '@/api/client'
 import FrontmatterForm from '@/components/editor/FrontmatterForm'
 import WysiwygEditor from '@/components/editor/WysiwygEditor'
@@ -71,8 +71,8 @@ export default function PostEdit() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="h-screen bg-background text-foreground px-6 pt-6 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <Button variant="ghost" onPress={() => navigate('/posts')}>
           <ArrowLeft size={18} />
           返回
@@ -93,17 +93,9 @@ export default function PostEdit() {
         </div>
       </div>
 
-      <div className="mb-4">
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="文章标题"
-          className="text-3xl font-bold"
-          variant="secondary"
-        />
+      <div className="flex-1 min-h-0 max-w-6xl mx-auto w-full">
+        <WysiwygEditor value={content} onChange={setContent} title={title} onTitleChange={setTitle} />
       </div>
-
-      <WysiwygEditor value={content} onChange={setContent} />
 
       <Drawer>
         <Drawer.Backdrop isOpen={drawerOpen} onOpenChange={setDrawerOpen}>

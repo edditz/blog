@@ -8,11 +8,11 @@ import CategoryManager from './pages/CategoryManager'
 export default function App() {
   return (
     <Routes>
+      <Route path="/posts/new" element={<PostEdit />} />
+      <Route path="/posts/:slug/edit" element={<PostEdit />} />
       <Route element={<AdminLayout />}>
         <Route path="/" element={<Navigate to="/posts" replace />} />
         <Route path="/posts" element={<PostList />} />
-        <Route path="/posts/new" element={<PostEdit />} />
-        <Route path="/posts/:slug/edit" element={<PostEdit />} />
         <Route path="/tags" element={<TagManager />} />
         <Route path="/categories" element={<CategoryManager />} />
       </Route>

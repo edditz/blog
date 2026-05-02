@@ -10,6 +10,8 @@ import SlashCommand from './SlashCommand'
 interface Props {
   value: string
   onChange: (value: string) => void
+  title: string
+  onTitleChange: (title: string) => void
 }
 
 const mdxComponents = [
@@ -35,7 +37,7 @@ const mdxComponents = [
   },
 ]
 
-export default function WysiwygEditor({ value, onChange }: Props) {
+export default function WysiwygEditor({ value, onChange, title, onTitleChange }: Props) {
   const [slashMenu, setSlashMenu] = useState<{ top: number; left: number } | null>(null)
 
   const editor = useEditor({
@@ -91,9 +93,18 @@ export default function WysiwygEditor({ value, onChange }: Props) {
   }, [editor])
 
   return (
-    <div className="border border-default rounded-lg overflow-hidden relative">
+    <div className="relative h-full flex flex-col">
       <EditorToolbar />
-      <EditorContent editor={editor} className="p-4 min-h-[400px]" />
+      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-0">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="文章标题"
+          className="w-full px-4 pt-4 pb-2 text-[2em] font-bold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
+        />
+        <EditorContent editor={editor} className="px-4" />
+      </div>
       {slashMenu && (
         <SlashCommand
           items={getComponentActions()}

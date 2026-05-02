@@ -19,7 +19,7 @@ export default function EditorToolbar() {
   ]
 
   return (
-    <div className="flex gap-1 p-2 border-b border-default flex-wrap">
+    <div className="flex gap-1 p-2 border-b border-default flex-wrap shrink-0">
       {toolbarItems.map(({ icon: Icon, action, active }, i) => (
         <Button
           key={i}
