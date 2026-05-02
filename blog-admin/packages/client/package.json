@@ -12,6 +12,7 @@
     "@blog-admin/shared": "workspace:*",
     "@heroui/react": "^3.0.0",
     "@heroui/styles": "^3.0.0",
+    "@tiptap/extension-bubble-menu": "2.27.2",
     "@tiptap/extension-image": "^2.6.0",
     "@tiptap/extension-link": "2.27.2",
     "@tiptap/extension-placeholder": "^2.6.0",
