@@ -46,6 +46,7 @@ export function useAutoSave({
   }, [slug])
 
   const performSaveRef = useRef<(() => Promise<void>) | null>(null)
+  const lastSaveWasManual = useRef(false)
 
   const performSave = useCallback(async () => {
     savingRef.current = true
@@ -90,6 +91,7 @@ export function useAutoSave({
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
+    lastSaveWasManual.current = true
     performSaveRef.current?.()
   }, [])
 
@@ -114,6 +116,7 @@ export function useAutoSave({
 
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
+      lastSaveWasManual.current = false
       performSaveRef.current?.()
     }, DEBOUNCE_MS)
 
@@ -129,5 +132,5 @@ export function useAutoSave({
     }
   }, [])
 
-  return { status, error, lastSavedAt, triggerSave }
+  return { status, error, lastSavedAt, triggerSave, lastSaveWasManual }
 }

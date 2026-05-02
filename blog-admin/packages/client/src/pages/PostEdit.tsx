@@ -42,7 +42,7 @@ export default function PostEdit() {
     [navigate],
   )
 
-  const { status: autoSaveStatus, error: autoSaveError, triggerSave } = useAutoSave({
+  const { status: autoSaveStatus, error: autoSaveError, triggerSave, lastSaveWasManual } = useAutoSave({
     isNew: !isEdit,
     slug,
     title,
@@ -93,12 +93,14 @@ export default function PostEdit() {
     if (prevStatusRef.current === autoSaveStatus) return
     prevStatusRef.current = autoSaveStatus
 
+    if (!lastSaveWasManual.current) return
+
     if (autoSaveStatus === 'saved') {
       toast.success('保存成功')
     } else if (autoSaveStatus === 'error') {
       toast.danger(autoSaveError || '保存失败')
     }
-  }, [autoSaveStatus, autoSaveError])
+  }, [autoSaveStatus, autoSaveError, lastSaveWasManual])
 
   return (
     <div className="h-screen bg-background text-foreground px-6 pt-6 flex flex-col overflow-hidden">

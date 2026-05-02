@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -41,6 +41,41 @@ const mdxComponents = [
 
 export default function WysiwygEditor({ value, onChange, title, onTitleChange }: Props) {
   const [slashMenu, setSlashMenu] = useState<{ top: number; left: number } | null>(null)
+  const slashPosRef = useRef<{ from: number; to: number } | null>(null)
+  const handleCloseRef = useRef<() => void>(() => {})
+  const skipNextSlashCheck = useRef(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const isSlashOpenRef = useRef(false)
+
+  const openSlashMenu = useCallback((editor: ReturnType<typeof useEditor>) => {
+    if (!editor) return
+    const { view } = editor
+    const { from } = view.state.selection
+    const coords = view.coordsAtPos(from)
+    const menuWidth = 256
+    const menuMaxHeight = 192
+    const margin = 12
+
+    let top = coords.bottom + 4
+    let left = coords.left
+
+    if (top + menuMaxHeight > window.innerHeight - margin) {
+      top = coords.top - menuMaxHeight - 4
+    }
+    if (top < margin) {
+      top = margin
+    }
+    if (left + menuWidth > window.innerWidth - margin) {
+      left = window.innerWidth - menuWidth - margin
+    }
+    if (left < margin) {
+      left = margin
+    }
+
+    slashPosRef.current = { from: from - 1, to: from }
+    isSlashOpenRef.current = true
+    setSlashMenu({ top, left })
+  }, [])
 
   const editor = useEditor({
     extensions: [
@@ -59,8 +94,47 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
     content: value,
     onUpdate: ({ editor }) => {
       onChange(editor.storage.markdown.getMarkdown())
+
+      if (!skipNextSlashCheck.current) {
+        const { from } = editor.state.selection
+        if (from > 0) {
+          const char = editor.state.doc.textBetween(from - 1, from)
+          if (char === '/' && !isSlashOpenRef.current) {
+            openSlashMenu(editor)
+          }
+        }
+      }
+      skipNextSlashCheck.current = false
+
+      const pos = slashPosRef.current
+      if (pos) {
+        const doc = editor.state.doc
+        const end = Math.min(pos.to, doc.content.size)
+        const char = doc.textBetween(pos.from, end)
+        if (char !== '/') {
+          handleCloseRef.current()
+        }
+      }
     },
   })
+
+  const handleClose = useCallback(() => {
+    isSlashOpenRef.current = false
+    setSlashMenu(null)
+    editor?.chain().focus().run()
+  }, [editor])
+
+  handleCloseRef.current = handleClose
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const handleScroll = () => {
+      if (isSlashOpenRef.current) handleCloseRef.current()
+    }
+    el.addEventListener('scroll', handleScroll)
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     if (!editor) return
@@ -75,33 +149,25 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
     return mdxComponents.map((comp) => ({
       ...comp,
       action: () => {
-        const text = `<${comp.label}>...</${comp.label}>`
-        editor.chain().focus().insertContent(text).run()
+        const pos = slashPosRef.current
+        if (!pos) return
+        skipNextSlashCheck.current = true
+        isSlashOpenRef.current = false
+        editor
+          .chain()
+          .focus()
+          .deleteRange({ from: pos.from, to: pos.to })
+          .insertContent(`<${comp.label}>...</${comp.label}>`)
+          .run()
+        setSlashMenu(null)
       },
     }))
-  }, [editor])
-
-  useEffect(() => {
-    if (!editor) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/' && editor.isFocused) {
-        e.preventDefault()
-        const { view } = editor
-        const { from } = view.state.selection
-        const coords = view.coordsAtPos(from)
-        setSlashMenu({ top: coords.bottom + 4, left: coords.left })
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [editor])
 
   return (
     <div className="relative h-full flex flex-col">
       <EditorToolbar />
-      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-0">
         <input
           type="text"
           value={title}
@@ -124,7 +190,7 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
         <SlashCommand
           items={getComponentActions()}
           position={slashMenu}
-          onClose={() => setSlashMenu(null)}
+          onClose={handleClose}
         />
       )}
     </div>
