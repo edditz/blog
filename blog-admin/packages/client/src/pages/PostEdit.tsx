@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Image } from 'lucide-react'
-import { Button, Spinner, Drawer } from '@heroui/react'
+import { Button, Spinner, Drawer, toast } from '@heroui/react'
 import { getPost } from '@/api/client'
 import FrontmatterForm from '@/components/editor/FrontmatterForm'
 import WysiwygEditor from '@/components/editor/WysiwygEditor'
@@ -76,6 +76,29 @@ export default function PostEdit() {
     setDrawerOpen(false)
     triggerSave()
   }, [triggerSave])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        triggerSave()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [triggerSave])
+
+  const prevStatusRef = useRef(autoSaveStatus)
+  useEffect(() => {
+    if (prevStatusRef.current === autoSaveStatus) return
+    prevStatusRef.current = autoSaveStatus
+
+    if (autoSaveStatus === 'saved') {
+      toast.success('保存成功')
+    } else if (autoSaveStatus === 'error') {
+      toast.danger(autoSaveError || '保存失败')
+    }
+  }, [autoSaveStatus, autoSaveError])
 
   return (
     <div className="h-screen bg-background text-foreground px-6 pt-6 flex flex-col overflow-hidden">

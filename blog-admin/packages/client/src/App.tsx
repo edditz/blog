@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { Toast } from '@heroui/react'
 import AdminLayout from './components/layout/AdminLayout'
 import PostList from './pages/PostList'
 import PostEdit from './pages/PostEdit'
@@ -7,6 +8,8 @@ import CategoryManager from './pages/CategoryManager'
 
 export default function App() {
   return (
+    <>
+    <Toast.Provider />
     <Routes>
       <Route path="/posts/new" element={<PostEdit />} />
       <Route path="/posts/:slug/edit" element={<PostEdit />} />
@@ -17,5 +20,6 @@ export default function App() {
         <Route path="/categories" element={<CategoryManager />} />
       </Route>
     </Routes>
+    </>
   )
 }
