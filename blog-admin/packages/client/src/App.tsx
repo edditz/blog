@@ -9,7 +9,7 @@ import CategoryManager from './pages/CategoryManager'
 export default function App() {
   return (
     <>
-    <Toast.Provider />
+    <Toast.Provider placement="top end" />
     <Routes>
       <Route path="/posts/new" element={<PostEdit />} />
       <Route path="/posts/:slug/edit" element={<PostEdit />} />
