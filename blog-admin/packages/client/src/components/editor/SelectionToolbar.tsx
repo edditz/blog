@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useCurrentEditor } from '@tiptap/react'
-import { Button, Input, Tooltip } from '@heroui/react'
+import type { Editor } from '@tiptap/react'
+import { Button, Input, Tooltip, Popover, PopoverTrigger, PopoverContent } from '@heroui/react'
 import {
   Bold,
   Italic,
@@ -11,14 +11,22 @@ import {
   Quote,
   CodeXml,
   Check,
+  Heading,
+  Pilcrow,
+  List,
+  ListOrdered,
 } from 'lucide-react'
 
-export default function SelectionToolbar() {
-  const { editor } = useCurrentEditor()
+const headingLevels = [1, 2, 3, 4, 5] as const
+
+interface Props {
+  editor: Editor
+}
+
+export default function SelectionToolbar({ editor }: Props) {
   const [showLinkInput, setShowLinkInput] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
-
-  if (!editor) return null
+  const [isHeadingOpen, setIsHeadingOpen] = useState(false)
 
   const handleLinkClick = () => {
     if (showLinkInput) {
@@ -78,6 +86,18 @@ export default function SelectionToolbar() {
 
   const blockItems = [
     {
+      icon: List,
+      label: '无序列表',
+      isActive: () => editor.isActive('bulletList'),
+      action: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    {
+      icon: ListOrdered,
+      label: '有序列表',
+      isActive: () => editor.isActive('orderedList'),
+      action: () => editor.chain().focus().toggleOrderedList().run(),
+    },
+    {
       icon: Link,
       label: '链接',
       isActive: () => editor.isActive('link'),
@@ -114,6 +134,7 @@ export default function SelectionToolbar() {
         size="sm"
         variant={isActive() ? 'secondary' : 'ghost'}
         onPress={action}
+        style={{ minWidth: 32, height: 32 }}
       >
         <Icon size={16} />
       </Button>
@@ -123,9 +144,74 @@ export default function SelectionToolbar() {
     </Tooltip>
   )
 
+  const currentHeading = headingLevels.find((l) =>
+    editor.isActive('heading', { level: l }),
+  )
+  const isParagraph = editor.isActive('paragraph') && !currentHeading
+
   return (
-    <div className="bg-surface border border-default rounded-lg shadow-lg overflow-hidden">
+    <div className="bg-surface border border-default rounded-lg shadow-lg">
       <div className="flex items-center gap-0.5 p-1">
+        <Popover
+          placement="bottom"
+          isOpen={isHeadingOpen}
+          onOpenChange={setIsHeadingOpen}
+        >
+          <Tooltip delay={300}>
+            <PopoverTrigger>
+              <Button
+                isIconOnly
+                size="sm"
+                variant={currentHeading ? 'secondary' : 'ghost'}
+                style={{ minWidth: 32, height: 32 }}
+              >
+                <Heading size={16} />
+              </Button>
+            </PopoverTrigger>
+            <Tooltip.Content showArrow placement="bottom">
+              标题
+            </Tooltip.Content>
+          </Tooltip>
+          <PopoverContent>
+            <div className="flex flex-col gap-0.5 p-1">
+              {headingLevels.map((level) => (
+                <Button
+                  key={level}
+                  size="sm"
+                  variant={
+                    editor.isActive('heading', { level })
+                      ? 'secondary'
+                      : 'ghost'
+                  }
+                  className="justify-start"
+                  onPress={() => {
+                    editor.chain().focus().toggleHeading({ level }).run()
+                    setIsHeadingOpen(false)
+                  }}
+                >
+                  H{level}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Tooltip delay={300}>
+          <Button
+            isIconOnly
+            size="sm"
+            variant={isParagraph ? 'secondary' : 'ghost'}
+            onPress={() =>
+              editor.chain().focus().setParagraph().run()
+            }
+            style={{ minWidth: 32, height: 32 }}
+          >
+            <Pilcrow size={16} />
+          </Button>
+          <Tooltip.Content showArrow placement="bottom">
+            段落
+          </Tooltip.Content>
+        </Tooltip>
+        <div className="w-px h-5 bg-default mx-1" />
         {inlineItems.map(renderButton)}
         <div className="w-px h-5 bg-default mx-1" />
         {blockItems.map(renderButton)}

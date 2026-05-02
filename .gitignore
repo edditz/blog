@@ -27,3 +27,12 @@ pnpm-debug.log*
 
 # jetbrains
 .idea/
+
+# playwright mcp
+.playwright-mcp/
+
+# misc logs
+excalidraw.log
+
+# mcp config
+.mcp.json
