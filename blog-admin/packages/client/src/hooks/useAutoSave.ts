@@ -35,6 +35,7 @@ export function useAutoSave({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstRender = useRef(true)
+  const savingRef = useRef(false)
   const currentSlugRef = useRef(slug)
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export function useAutoSave({
   }, [slug])
 
   const performSave = useCallback(async () => {
+    savingRef.current = true
     setStatus('saving')
     try {
       const data = { ...frontmatter, title }
@@ -67,6 +69,8 @@ export function useAutoSave({
       }, SAVED_INDICATOR_MS)
     } catch {
       setStatus('error')
+    } finally {
+      savingRef.current = false
     }
   }, [isNew, title, content, frontmatter, onSuccess])
 
@@ -84,7 +88,7 @@ export function useAutoSave({
       return
     }
 
-    if (status === 'saving') return
+    if (savingRef.current) return
 
     setStatus('pending')
 
@@ -96,7 +100,7 @@ export function useAutoSave({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [title, content, frontmatter, performSave, status])
+  }, [title, content, frontmatter, performSave])
 
   useEffect(() => {
     return () => {
