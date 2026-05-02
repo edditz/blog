@@ -1,11 +1,13 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
 import { Markdown } from 'tiptap-markdown'
 import EditorToolbar from './EditorToolbar'
 import SlashCommand from './SlashCommand'
+import SelectionToolbar from './SelectionToolbar'
 
 interface Props {
   value: string
@@ -45,6 +47,9 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
       StarterKit,
       Placeholder.configure({ placeholder: '输入 / 插入组件...' }),
       Image,
+      Link.configure({
+        openOnClick: false,
+      }),
       Markdown.configure({
         html: false,
         transformPastedText: true,
@@ -105,6 +110,18 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
         />
         <EditorContent editor={editor} className="px-4" />
       </div>
+      {editor && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 150, placement: 'top' }}
+          shouldShow={({ state }) => {
+            const { empty } = state.selection
+            return !empty
+          }}
+        >
+          <SelectionToolbar />
+        </BubbleMenu>
+      )}
       {slashMenu && (
         <SlashCommand
           items={getComponentActions()}
