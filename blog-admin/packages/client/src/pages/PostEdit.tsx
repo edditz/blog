@@ -2,23 +2,25 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Image } from 'lucide-react'
 import { Button, Spinner, Drawer } from '@heroui/react'
-import { getPost, createPost, updatePost } from '@/api/client'
+import { getPost } from '@/api/client'
 import FrontmatterForm from '@/components/editor/FrontmatterForm'
 import WysiwygEditor from '@/components/editor/WysiwygEditor'
 import ImageManager from '@/components/editor/ImageManager'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import type { PostFrontmatter } from '@blog-admin/shared'
 
-const emptyFrontmatter: PostFrontmatter = {
-  title: '无标题',
-  date: new Date().toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric',
-  }),
-  frontmatter: '',
-  tags: [],
-  draft: true,
+function createEmptyFrontmatter(): PostFrontmatter {
+  return {
+    title: '无标题',
+    date: new Date().toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+    }),
+    frontmatter: '',
+    tags: [],
+    draft: true,
+  }
 }
 
 export default function PostEdit() {
@@ -28,9 +30,8 @@ export default function PostEdit() {
 
   const [title, setTitle] = useState(isEdit ? '' : '无标题')
   const [frontmatter, setFrontmatter] =
-    useState<PostFrontmatter>(emptyFrontmatter)
+    useState<PostFrontmatter>(createEmptyFrontmatter)
   const [content, setContent] = useState('')
-  const [saving, setSaving] = useState(false)
   const [showImages, setShowImages] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -52,40 +53,29 @@ export default function PostEdit() {
 
   useEffect(() => {
     if (isEdit && slug) {
-      getPost(slug).then((post) => {
-        setTitle(post.title)
-        setFrontmatter({
-          title: post.title,
-          date: post.date,
-          frontmatter: post.frontmatter,
-          tags: post.tags,
-          category: post.category,
-          draft: post.draft,
+      getPost(slug)
+        .then((post) => {
+          setTitle(post.title)
+          setFrontmatter({
+            title: post.title,
+            date: post.date,
+            frontmatter: post.frontmatter,
+            tags: post.tags,
+            category: post.category,
+            draft: post.draft,
+          })
+          setContent(post.content)
         })
-        setContent(post.content)
-      })
+        .catch(() => {
+          navigate('/posts', { replace: true })
+        })
     }
-  }, [isEdit, slug])
+  }, [isEdit, slug, navigate])
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      const data = { ...frontmatter, title }
-      if (isEdit && slug) {
-        await updatePost(slug, data, content)
-      } else {
-        const newSlug = title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '')
-        await createPost(newSlug, data, content)
-        navigate(`/posts/${newSlug}/edit`)
-      }
-      setDrawerOpen(false)
-    } finally {
-      setSaving(false)
-    }
-  }
+  const handleManualSave = useCallback(() => {
+    setDrawerOpen(false)
+    triggerSave()
+  }, [triggerSave])
 
   return (
     <div className="h-screen bg-background text-foreground px-6 pt-6 flex flex-col overflow-hidden">
@@ -144,16 +134,9 @@ export default function PostEdit() {
                 <Button slot="close" variant="secondary">
                   取消
                 </Button>
-                <Button
-                  isPending={saving}
-                  onPress={handleSave}
-                >
-                  {({ isPending }) => (
-                    <>
-                      {isPending ? <Spinner color="current" size="sm" /> : <Save size={16} />}
-                      {isPending ? '保存中...' : '确认保存'}
-                    </>
-                  )}
+                <Button onPress={handleManualSave}>
+                  <Save size={16} />
+                  确认保存
                 </Button>
               </Drawer.Footer>
             </Drawer.Dialog>
