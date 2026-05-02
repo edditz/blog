@@ -15,6 +15,7 @@ export interface UseAutoSaveOptions {
 
 export interface UseAutoSaveReturn {
   status: SaveStatus
+  error: string | null
   lastSavedAt: Date | null
   triggerSave: () => void
 }
@@ -31,6 +32,7 @@ export function useAutoSave({
   onSuccess,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
   const [status, setStatus] = useState<SaveStatus>('idle')
+  const [error, setError] = useState<string | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -49,10 +51,11 @@ export function useAutoSave({
       const data = { ...frontmatter, title }
 
       if (isNew && !currentSlugRef.current) {
-        const newSlug = title
+        const slugified = title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '') || 'untitled'
+          .replace(/(^-|-$)/g, '')
+        const newSlug = slugified || `untitled-${Date.now()}`
         await createPost(newSlug, data, content)
         currentSlugRef.current = newSlug
         onSuccess?.(newSlug)
@@ -60,6 +63,7 @@ export function useAutoSave({
         await updatePost(currentSlugRef.current!, data, content)
       }
 
+      setError(null)
       setStatus('saved')
       setLastSavedAt(new Date())
 
@@ -67,7 +71,9 @@ export function useAutoSave({
       savedTimerRef.current = setTimeout(() => {
         setStatus('idle')
       }, SAVED_INDICATOR_MS)
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '保存失败'
+      setError(message)
       setStatus('error')
     } finally {
       savingRef.current = false
@@ -109,5 +115,5 @@ export function useAutoSave({
     }
   }, [])
 
-  return { status, lastSavedAt, triggerSave }
+  return { status, error, lastSavedAt, triggerSave }
 }
