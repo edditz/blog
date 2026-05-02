@@ -19,6 +19,7 @@ npm run new-post     # Scaffold a new blog post
 
 # Blog Admin (独立项目)
 cd blog-admin && pnpm dev   # Start admin backend + frontend
+./test.sh                    # Run admin API tests
 ```
 
 ## Key Files
@@ -40,6 +41,7 @@ cd blog-admin && pnpm dev   # Start admin backend + frontend
 | Component architecture | [src/components/DESIGN_NOTES.md](src/components/DESIGN_NOTES.md) |
 | Layout architecture | [src/layouts/DESIGN_NOTES.md](src/layouts/DESIGN_NOTES.md) |
 | Blog admin system | [docs/blog-admin.md](docs/blog-admin.md) |
+| Admin API testing | [docs/blog-admin.md#testing](docs/blog-admin.md#testing) |
 
 ## Path Aliases
 

@@ -189,6 +189,83 @@ packages/client/src/
     └── CategoryManager.tsx # 分类管理页
 ```
 
+## Testing
+
+### Running Tests
+
+```bash
+# 从项目根目录运行全部测试
+./test.sh
+
+# 带 watch 模式（开发时自动重跑）
+./test.sh --watch
+```
+
+### Test Stack
+
+- **Vitest** — 测试运行器（ESM 原生支持）
+- **Supertest** — HTTP 断言库，直接调 Express app 无需启动服务器
+
+### Test Structure
+
+```
+packages/server/src/__tests__/
+├── tags.test.ts        # 标签 API 测试 (8 cases)
+└── categories.test.ts  # 分类 API 测试 (11 cases)
+```
+
+### How It Works
+
+测试从客户端视角出发，调用真实 API 并验证真实文件内容：
+
+1. `beforeAll` — 创建临时目录，设置 `BLOG_ROOT` 环境变量，动态导入 `createApp()`
+2. `beforeEach` — 在临时目录下创建测试用的 MDX 文件
+3. 测试 — 通过 `supertest` 发 HTTP 请求到 Express app
+4. 断言 — 验证 API 响应 + 读取文件确认内容被正确修改
+5. `afterEach` — 清理临时目录
+
+```
+HTTP 请求 → Express 路由 → Service 层 → 文件读写 → HTTP 响应
+   ↑                                                    ↓
+ supertest                                          断言响应
+                                                  + 断言文件内容
+```
+
+### Environment Isolation
+
+- 每个测试文件使用独立的临时目录 (`os.tmpdir()`)
+- 通过 `BLOG_ROOT` 环境变量覆盖配置，不影响真实文件
+- 动态 `import()` 确保环境变量在模块加载前生效
+
+### Adding New Tests
+
+新增测试文件放在 `packages/server/src/__tests__/` 下，遵循现有模式：
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+import request from 'supertest'
+import type { Express } from 'express'
+
+let tmpDir: string
+let postsDir: string
+let app: Express
+
+beforeAll(async () => {
+  tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'your-test-'))
+  postsDir = path.join(tmpDir, 'src', 'posts')
+  process.env.BLOG_ROOT = tmpDir
+  const { createApp } = await import('../index.js')
+  app = createApp()
+})
+
+afterAll(() => { delete process.env.BLOG_ROOT })
+
+// ... test cases using request(app).get('/api/...')
+```
+
 ## Relationship with Astro Site
 
 后台和前端站点是独立的项目：

@@ -83,3 +83,25 @@ import Callout from '@/components/ui/Callout.astro';
 - Static site only (`astro build` → `dist/`)
 - No server-side rendering
 - Deployed to Aliyun OSS via GitHub Actions
+
+## Testing (Blog Admin)
+
+### Approach
+
+从客户端视角做集成测试：调用真实 API，验证真实文件。
+
+- **不 mock 文件系统** — 测试写入临时目录，读取真实文件验证
+- **不 mock HTTP** — 用 `supertest` 直接请求 Express app
+- **隔离** — 每个测试文件使用独立临时目录，通过 `BLOG_ROOT` 环境变量注入
+
+### Test Files
+
+- `packages/server/src/__tests__/tags.test.ts` — 标签 CRUD
+- `packages/server/src/__tests__/categories.test.ts` — 分类 CRUD
+
+### Commands
+
+```bash
+./test.sh              # 运行全部测试
+./test.sh --watch      # Watch 模式
+```
