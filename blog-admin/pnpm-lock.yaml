@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@tiptap/extension-link':
+        specifier: 2.27.2
+        version: 2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@tiptap/pm@2.27.2)
     devDependencies:
       '@types/supertest':
         specifier: ^7.2.0
@@ -35,6 +39,9 @@ importers:
       '@tiptap/extension-image':
         specifier: ^2.6.0
         version: 2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))
+      '@tiptap/extension-link':
+        specifier: 2.27.2
+        version: 2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@tiptap/pm@2.27.2)
       '@tiptap/extension-placeholder':
         specifier: ^2.6.0
         version: 2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@tiptap/pm@2.27.2)
@@ -1111,6 +1118,12 @@ packages:
     peerDependencies:
       '@tiptap/core': ^2.7.0
 
+  '@tiptap/extension-link@2.27.2':
+    resolution: {integrity: sha512-bnP61qkr0Kj9Cgnop1hxn2zbOCBzNtmawxr92bVTOE31fJv6FhtCnQiD6tuPQVGMYhcmAj7eihtvuEMFfqEPcQ==}
+    peerDependencies:
+      '@tiptap/core': ^2.7.0
+      '@tiptap/pm': ^2.7.0
+
   '@tiptap/extension-list-item@2.27.2':
     resolution: {integrity: sha512-eJNee7IEGXMnmygM5SdMGDC8m/lMWmwNGf9fPCK6xk0NxuQRgmZHL6uApKcdH6gyNcRPHCqvTTkhEP7pbny/fg==}
     peerDependencies:
@@ -1956,6 +1969,9 @@ packages:
 
   linkify-it@5.0.0:
     resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
+
+  linkifyjs@4.3.2:
+    resolution: {integrity: sha512-NT1CJtq3hHIreOianA8aSXn6Cw0JzYOuDQbOrSPe7gqFnCpKP++MQe3ODgO3oh2GJFORkAAdqredOa60z63GbA==}
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -3479,6 +3495,12 @@ snapshots:
     dependencies:
       '@tiptap/core': 2.27.2(@tiptap/pm@2.27.2)
 
+  '@tiptap/extension-link@2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@tiptap/pm@2.27.2)':
+    dependencies:
+      '@tiptap/core': 2.27.2(@tiptap/pm@2.27.2)
+      '@tiptap/pm': 2.27.2
+      linkifyjs: 4.3.2
+
   '@tiptap/extension-list-item@2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))':
     dependencies:
       '@tiptap/core': 2.27.2(@tiptap/pm@2.27.2)
@@ -4439,6 +4461,8 @@ snapshots:
   linkify-it@5.0.0:
     dependencies:
       uc.micro: 2.1.0
+
+  linkifyjs@4.3.2: {}
 
   loose-envify@1.4.0:
     dependencies:
