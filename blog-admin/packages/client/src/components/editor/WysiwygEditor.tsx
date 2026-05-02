@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Image from '@tiptap/extension-image'
+import { Markdown } from 'tiptap-markdown'
 import EditorToolbar from './EditorToolbar'
 import SlashCommand from './SlashCommand'
 
@@ -40,12 +42,26 @@ export default function WysiwygEditor({ value, onChange }: Props) {
     extensions: [
       StarterKit,
       Placeholder.configure({ placeholder: '输入 / 插入组件...' }),
+      Image,
+      Markdown.configure({
+        html: false,
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
     ],
     content: value,
     onUpdate: ({ editor }) => {
-      onChange(editor.getText())
+      onChange(editor.storage.markdown.getMarkdown())
     },
   })
+
+  useEffect(() => {
+    if (!editor) return
+    const currentMarkdown = editor.storage.markdown.getMarkdown()
+    if (currentMarkdown !== value) {
+      editor.commands.setContent(value, false)
+    }
+  }, [editor, value])
 
   const getComponentActions = useCallback(() => {
     if (!editor) return []
@@ -77,7 +93,7 @@ export default function WysiwygEditor({ value, onChange }: Props) {
   return (
     <div className="border border-default rounded-lg overflow-hidden relative">
       <EditorToolbar />
-      <EditorContent editor={editor} className="p-4 min-h-[400px] prose dark:prose-invert max-w-none" />
+      <EditorContent editor={editor} className="p-4 min-h-[400px]" />
       {slashMenu && (
         <SlashCommand
           items={getComponentActions()}

@@ -6,7 +6,7 @@
 
 ```bash
 # 从项目根目录启动（推荐）
-./start-admin.sh
+./dev.sh
 
 # 或手动启动
 cd blog-admin

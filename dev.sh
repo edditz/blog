@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# 启动博客后台管理平台
-# 使用方式: ./start-admin.sh
+# 启动博客 + 后台管理平台
+# 使用方式: ./dev.sh
 
 set -e
 
 ADMIN_DIR="$(cd "$(dirname "$0")" && pwd)/blog-admin"
-PORTS=(3001 5173 4747)
+PORTS=(3001 5173 4321)
 
 # 清理占用指定端口的进程
 kill_port() {
@@ -22,14 +22,15 @@ kill_port() {
 # 清理所有相关端口
 cleanup() {
   echo ""
-  echo "正在清理后台管理平台进程..."
+  echo "正在清理进程..."
+  # 停止后台任务
+  jobs -p | xargs kill 2>/dev/null || true
   for port in "${PORTS[@]}"; do
     kill_port "$port"
   done
   echo "清理完成。"
 }
 
-# 仅捕获 EXIT，让 pnpm 自行处理 SIGINT，退出后再兜底清理残留
 trap cleanup EXIT
 
 # 启动前先清理可能残留的进程
@@ -40,15 +41,21 @@ done
 
 echo ""
 echo "========================================="
-echo "  博客后台管理平台"
+echo "  博客 + 后台管理平台"
 echo "========================================="
+echo "  博客:  http://localhost:4321"
 echo "  前端:  http://localhost:5173"
 echo "  后端:  http://localhost:3001"
 echo "  按 Ctrl+C 停止所有服务"
 echo "========================================="
 echo ""
 
-cd "$ADMIN_DIR"
+# 启动博客
+pnpm dev &
 
-# 启动前端和后端
-pnpm dev
+# 启动后台管理平台
+cd "$ADMIN_DIR"
+pnpm dev &
+
+# 等待所有子进程
+wait

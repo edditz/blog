@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Image } from 'lucide-react'
-import { Button, Input, Spinner } from '@heroui/react'
+import { Button, Input, Spinner, Drawer } from '@heroui/react'
 import { getPost, createPost, updatePost } from '@/api/client'
 import FrontmatterForm from '@/components/editor/FrontmatterForm'
-import SourceEditor from '@/components/editor/SourceEditor'
 import WysiwygEditor from '@/components/editor/WysiwygEditor'
-import ModeSwitch from '@/components/editor/ModeSwitch'
 import ImageManager from '@/components/editor/ImageManager'
 import type { PostFrontmatter } from '@blog-admin/shared'
 
@@ -31,9 +29,9 @@ export default function PostEdit() {
   const [frontmatter, setFrontmatter] =
     useState<PostFrontmatter>(emptyFrontmatter)
   const [content, setContent] = useState('')
-  const [mode, setMode] = useState<'source' | 'wysiwyg'>('source')
   const [saving, setSaving] = useState(false)
   const [showImages, setShowImages] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
     if (isEdit && slug) {
@@ -66,6 +64,7 @@ export default function PostEdit() {
         await createPost(newSlug, data, content)
         navigate(`/posts/${newSlug}/edit`)
       }
+      setDrawerOpen(false)
     } finally {
       setSaving(false)
     }
@@ -87,16 +86,9 @@ export default function PostEdit() {
             <Image size={16} />
             图片
           </Button>
-          <Button
-            isPending={saving}
-            onPress={handleSave}
-          >
-            {({ isPending }) => (
-              <>
-                {isPending ? <Spinner color="current" size="sm" /> : <Save size={16} />}
-                {isPending ? '保存中...' : '保存'}
-              </>
-            )}
+          <Button onPress={() => setDrawerOpen(true)}>
+            <Save size={16} />
+            保存
           </Button>
         </div>
       </div>
@@ -111,19 +103,39 @@ export default function PostEdit() {
         />
       </div>
 
-      <div className="mb-4">
-        <FrontmatterForm data={frontmatter} onChange={setFrontmatter} />
-      </div>
+      <WysiwygEditor value={content} onChange={setContent} />
 
-      <div className="mb-4">
-        <ModeSwitch mode={mode} onChange={setMode} />
-      </div>
-
-      {mode === 'source' ? (
-        <SourceEditor value={content} onChange={setContent} />
-      ) : (
-        <WysiwygEditor value={content} onChange={setContent} />
-      )}
+      <Drawer>
+        <Drawer.Backdrop isOpen={drawerOpen} onOpenChange={setDrawerOpen}>
+          <Drawer.Content placement="right">
+            <Drawer.Dialog>
+              <Drawer.CloseTrigger />
+              <Drawer.Header>
+                <Drawer.Heading>文章设置</Drawer.Heading>
+              </Drawer.Header>
+              <Drawer.Body>
+                <FrontmatterForm data={frontmatter} onChange={setFrontmatter} />
+              </Drawer.Body>
+              <Drawer.Footer>
+                <Button slot="close" variant="secondary">
+                  取消
+                </Button>
+                <Button
+                  isPending={saving}
+                  onPress={handleSave}
+                >
+                  {({ isPending }) => (
+                    <>
+                      {isPending ? <Spinner color="current" size="sm" /> : <Save size={16} />}
+                      {isPending ? '保存中...' : '确认保存'}
+                    </>
+                  )}
+                </Button>
+              </Drawer.Footer>
+            </Drawer.Dialog>
+          </Drawer.Content>
+        </Drawer.Backdrop>
+      </Drawer>
 
       {showImages && slug && (
         <ImageManager

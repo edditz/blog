@@ -91,7 +91,7 @@ AdminLayout 包裹所有路由，提供侧边栏 + 内容区布局。
 myblog/
 ├── src/               # Astro 站点（读取 posts）
 ├── blog-admin/        # 管理后台（读写 posts）
-└── start-admin.sh     # 启动脚本
+└── dev.sh             # 启动脚本（博客 + 后台）
 ```
 
 后台修改文件 → Astro dev server 热更新 / 需要重新 build。

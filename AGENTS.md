@@ -25,7 +25,7 @@ View transitions via ClientRouter.
 - `packages/client` — React SPA (Vite port 5173)
 
 直接读写 `src/posts/` 目录，无独立数据库。
-启动：`./start-admin.sh` 或 `cd blog-admin && pnpm dev`
+启动：`./dev.sh` 或 `cd blog-admin && pnpm dev`
 
 → [docs/architecture.md](docs/architecture.md)
 
@@ -67,7 +67,7 @@ src/
 | Change posts-per-page | `src/config.ts` → `postsPerPage` |
 | Modify search behavior | `src/pages/search.json.ts` (index), `src/layouts/Layout.astro` (UI) |
 | Add about page content | `src/pages/about.astro`, `src/components/about/` |
-| Start blog admin | `./start-admin.sh` or `cd blog-admin && pnpm dev` |
+| Start blog + admin | `./dev.sh` or `cd blog-admin && pnpm dev` |
 | Add admin API endpoint | `blog-admin/packages/server/src/routes/` + `services/` |
 | Modify admin UI | `blog-admin/packages/client/src/pages/` |
 | Change admin shared types | `blog-admin/packages/shared/src/types.ts` |
