@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useCurrentEditor } from '@tiptap/react'
-import '@tiptap/extension-link'
 import { Button, Input, Tooltip } from '@heroui/react'
 import {
   Bold,

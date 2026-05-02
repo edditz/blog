@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
+import { TextSelection } from '@tiptap/pm/state'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Image from '@tiptap/extension-image'
@@ -116,7 +117,7 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
           tippyOptions={{ duration: 150, placement: 'top' }}
           shouldShow={({ state }) => {
             const { empty } = state.selection
-            return !empty
+            return !empty && state.selection instanceof TextSelection
           }}
         >
           <SelectionToolbar />
