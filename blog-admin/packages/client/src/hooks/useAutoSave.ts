@@ -36,13 +36,16 @@ export function useAutoSave({
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isFirstRender = useRef(true)
+  const hasChanged = useRef(false)
+  const initialValues = useRef({ title, content, frontmatter })
   const savingRef = useRef(false)
   const currentSlugRef = useRef(slug)
 
   useEffect(() => {
     currentSlugRef.current = slug
   }, [slug])
+
+  const performSaveRef = useRef<(() => Promise<void>) | null>(null)
 
   const performSave = useCallback(async () => {
     savingRef.current = true
@@ -80,33 +83,44 @@ export function useAutoSave({
     }
   }, [isNew, title, content, frontmatter, onSuccess])
 
+  performSaveRef.current = performSave
+
   const triggerSave = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
-    performSave()
-  }, [performSave])
+    performSaveRef.current?.()
+  }, [])
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
+    if (savingRef.current) return
+
+    const initial = initialValues.current
+    const isSame =
+      title === initial.title &&
+      content === initial.content &&
+      JSON.stringify(frontmatter) === JSON.stringify(initial.frontmatter)
+
+    if (isSame && !hasChanged.current) return
+
+    if (!hasChanged.current) {
+      initialValues.current = { title, content, frontmatter }
+      hasChanged.current = true
       return
     }
-
-    if (savingRef.current) return
 
     setStatus('pending')
 
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
-      performSave()
+      performSaveRef.current?.()
     }, DEBOUNCE_MS)
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [title, content, frontmatter, performSave])
+  }, [title, content, frontmatter])
 
   useEffect(() => {
     return () => {
