@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Image } from 'lucide-react'
 import { Button, Spinner, Drawer } from '@heroui/react'
@@ -6,10 +6,11 @@ import { getPost, createPost, updatePost } from '@/api/client'
 import FrontmatterForm from '@/components/editor/FrontmatterForm'
 import WysiwygEditor from '@/components/editor/WysiwygEditor'
 import ImageManager from '@/components/editor/ImageManager'
+import { useAutoSave } from '@/hooks/useAutoSave'
 import type { PostFrontmatter } from '@blog-admin/shared'
 
 const emptyFrontmatter: PostFrontmatter = {
-  title: '',
+  title: '无标题',
   date: new Date().toLocaleDateString('en-US', {
     month: '2-digit',
     day: '2-digit',
@@ -25,13 +26,29 @@ export default function PostEdit() {
   const navigate = useNavigate()
   const isEdit = !!slug
 
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(isEdit ? '' : '无标题')
   const [frontmatter, setFrontmatter] =
     useState<PostFrontmatter>(emptyFrontmatter)
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
   const [showImages, setShowImages] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  const handleAutoSaveSuccess = useCallback(
+    (newSlug: string) => {
+      navigate(`/posts/${newSlug}/edit`, { replace: true })
+    },
+    [navigate],
+  )
+
+  const { status: autoSaveStatus, error: autoSaveError, triggerSave } = useAutoSave({
+    isNew: !isEdit,
+    slug,
+    title,
+    content,
+    frontmatter,
+    onSuccess: handleAutoSaveSuccess,
+  })
 
   useEffect(() => {
     if (isEdit && slug) {
@@ -78,6 +95,21 @@ export default function PostEdit() {
           返回
         </Button>
         <div className="flex items-center gap-2">
+          {autoSaveStatus === 'pending' && (
+            <span className="text-sm text-muted-foreground">未保存</span>
+          )}
+          {autoSaveStatus === 'saving' && (
+            <span className="text-sm text-blue-500 flex items-center gap-1">
+              <Spinner size="sm" color="current" />
+              保存中...
+            </span>
+          )}
+          {autoSaveStatus === 'saved' && (
+            <span className="text-sm text-green-500">已保存</span>
+          )}
+          {autoSaveStatus === 'error' && (
+            <span className="text-sm text-red-500">{autoSaveError || '保存失败'}</span>
+          )}
           <Button
             variant="outline"
             isDisabled={!slug}
