@@ -86,6 +86,7 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '/' && editor.isFocused) {
+        e.preventDefault()
         const { view } = editor
         const { from } = view.state.selection
         const coords = view.coordsAtPos(from)

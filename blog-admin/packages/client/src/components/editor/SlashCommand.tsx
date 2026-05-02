@@ -52,7 +52,7 @@ export default function SlashCommand({ items, position, onClose }: Props) {
 
   return (
     <div
-      className="absolute z-50 bg-surface border border-default rounded-lg shadow-lg w-64 max-h-48 overflow-auto"
+      className="fixed z-50 bg-surface border border-default rounded-lg shadow-lg w-64 max-h-48 overflow-auto"
       style={{ top: position.top, left: position.left }}
     >
       <div className="border-b border-default">
