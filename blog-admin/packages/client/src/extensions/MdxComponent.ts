@@ -5,6 +5,7 @@ import { NodeViewWrapper } from '@tiptap/react'
 import type { NodeViewProps } from '@tiptap/react'
 import React from 'react'
 import { CalloutView } from '@/components/editor/CalloutView'
+import { QuoteView } from '@/components/editor/QuoteView'
 
 const COMPONENT_COLORS: Record<string, { accent: string; bg: string; badge: string }> = {
   Callout: { accent: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30', badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
@@ -131,6 +132,9 @@ export const MdxComponent = Node.create({
       const component = props.node.attrs.component as string
       if (component === 'Callout') {
         return React.createElement(CalloutView, props)
+      }
+      if (component === 'Quote') {
+        return React.createElement(QuoteView, props)
       }
       return React.createElement(MdxComponentView, props)
     })
