@@ -5,6 +5,14 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import { Markdown } from 'tiptap-markdown'
+import { MdxComponent } from '@/extensions/MdxComponent'
+import {
+  extractImports,
+  mdxToTipTap,
+  tipTapToMdx,
+  generateImports,
+  collectComponents,
+} from '@/utils/mdxParser'
 import EditorToolbar from './EditorToolbar'
 import SlashCommand from './SlashCommand'
 import SelectionToolbar from './SelectionToolbar'
@@ -19,23 +27,77 @@ interface Props {
 const mdxComponents = [
   {
     label: 'Callout',
-    description: '提示框（info/warning/error）',
+    description: '提示框（note/warning/tip/danger）',
+    defaultProps: { type: 'note' },
+    defaultSlot: '在此输入提示内容...',
   },
   {
     label: 'Tabs',
     description: '标签页组件',
+    defaultProps: { tabs: ['Tab 1', 'Tab 2'] },
+    defaultSlot: '',
+  },
+  {
+    label: 'TabItem',
+    description: '标签页面板',
+    defaultProps: {},
+    defaultSlot: '在此输入标签内容...',
   },
   {
     label: 'Quote',
     description: '引用块',
+    defaultProps: { author: 'Author' },
+    defaultSlot: '在此输入引用内容...',
   },
   {
-    label: 'Code Block',
-    description: '代码块',
+    label: 'ProsCons',
+    description: '优缺点对比',
+    defaultProps: { pros: ['Pro 1'], cons: ['Con 1'] },
+    defaultSlot: '',
   },
   {
-    label: 'Image',
-    description: '插入图片',
+    label: 'LinkCard',
+    description: '链接卡片',
+    defaultProps: { href: 'https://example.com', title: 'Link Title' },
+    defaultSlot: '',
+  },
+  {
+    label: 'YouTube',
+    description: 'YouTube 视频嵌入',
+    defaultProps: { id: 'dQw4w9WgXcQ' },
+    defaultSlot: '',
+  },
+  {
+    label: 'Steps',
+    description: '步骤/顺序容器',
+    defaultProps: {},
+    defaultSlot: '### Step 1\n描述...',
+  },
+  {
+    label: 'Figure',
+    description: '带说明的图片',
+    defaultProps: { src: '/images/placeholder.png', alt: '描述' },
+    defaultSlot: '',
+  },
+  {
+    label: 'Divider',
+    description: '带标题的分隔线',
+    defaultProps: { title: 'Section Title' },
+    defaultSlot: '',
+  },
+  {
+    label: 'Separator',
+    description: '装饰性分隔线',
+    defaultProps: {},
+    defaultSlot: '',
+    selfClosing: true,
+  },
+  {
+    label: 'Badge',
+    description: '小标签/徽章',
+    defaultProps: { content: 'Label' },
+    defaultSlot: '',
+    selfClosing: true,
   },
 ]
 
@@ -43,9 +105,13 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
   const [slashMenu, setSlashMenu] = useState<{ top: number; left: number } | null>(null)
   const slashPosRef = useRef<{ from: number; to: number } | null>(null)
   const handleCloseRef = useRef<() => void>(() => {})
-  const skipNextSlashCheck = useRef(false)
+  const handleOpenRef = useRef<(editor: ReturnType<typeof useEditor>) => void>(() => {})
   const scrollRef = useRef<HTMLDivElement>(null)
+
   const isSlashOpenRef = useRef(false)
+  const internalChangeRef = useRef(false)
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null)
+  const importsRef = useRef<string[]>([])
 
   const openSlashMenu = useCallback((editor: ReturnType<typeof useEditor>) => {
     if (!editor) return
@@ -85,26 +151,42 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
       Link.configure({
         openOnClick: false,
       }),
+      MdxComponent,
       Markdown.configure({
-        html: false,
+        html: true,
         transformPastedText: true,
         transformCopiedText: true,
       }),
     ],
-    content: value,
-    onUpdate: ({ editor }) => {
-      onChange(editor.storage.markdown.getMarkdown())
-
-      if (!skipNextSlashCheck.current) {
-        const { from } = editor.state.selection
-        if (from > 0) {
-          const char = editor.state.doc.textBetween(from - 1, from)
-          if (char === '/' && !isSlashOpenRef.current) {
-            openSlashMenu(editor)
+    editorProps: {
+      handleKeyDown: (_view, event) => {
+        if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+          const ed = editorRef.current
+          if (!ed) return false
+          const { from } = ed.state.selection
+          const $pos = ed.state.doc.resolve(from)
+          const textBefore = $pos.parent.textContent.slice(0, $pos.parentOffset)
+          if (textBefore === '' || /\s$/.test(textBefore)) {
+            requestAnimationFrame(() => handleOpenRef.current(ed))
           }
         }
-      }
-      skipNextSlashCheck.current = false
+        return false
+      },
+    },
+    content: (() => {
+      const { imports, body } = extractImports(value)
+      importsRef.current = imports
+      return mdxToTipTap(body)
+    })(),
+    onUpdate: ({ editor }) => {
+      const raw = editor.storage.markdown.getMarkdown()
+      const mdx = tipTapToMdx(raw)
+      const componentNames = collectComponents(raw)
+      const imports = generateImports(componentNames)
+      importsRef.current = imports
+      const fullContent = imports.length > 0 ? imports.join('\n') + '\n\n' + mdx : mdx
+      internalChangeRef.current = true
+      onChange(fullContent)
 
       const pos = slashPosRef.current
       if (pos) {
@@ -118,6 +200,8 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
     },
   })
 
+  editorRef.current = editor
+
   const handleClose = useCallback(() => {
     isSlashOpenRef.current = false
     setSlashMenu(null)
@@ -125,22 +209,38 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
   }, [editor])
 
   handleCloseRef.current = handleClose
+  handleOpenRef.current = openSlashMenu
 
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
+    let scrollTimeout: ReturnType<typeof setTimeout>
     const handleScroll = () => {
-      if (isSlashOpenRef.current) handleCloseRef.current()
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        if (isSlashOpenRef.current) handleCloseRef.current()
+      }, 150)
     }
     el.addEventListener('scroll', handleScroll)
-    return () => el.removeEventListener('scroll', handleScroll)
+    return () => {
+      clearTimeout(scrollTimeout)
+      el.removeEventListener('scroll', handleScroll)
+    }
   }, [])
 
   useEffect(() => {
     if (!editor) return
+    if (internalChangeRef.current) {
+      internalChangeRef.current = false
+      return
+    }
     const currentMarkdown = editor.storage.markdown.getMarkdown()
-    if (currentMarkdown !== value) {
-      editor.commands.setContent(value, false)
+    const currentMdx = tipTapToMdx(currentMarkdown)
+    const { imports, body } = extractImports(value)
+    const targetMdx = mdxToTipTap(body)
+    if (currentMdx !== tipTapToMdx(targetMdx)) {
+      importsRef.current = imports
+      editor.commands.setContent(targetMdx, false)
     }
   }, [editor, value])
 
@@ -151,13 +251,30 @@ export default function WysiwygEditor({ value, onChange, title, onTitleChange }:
       action: () => {
         const pos = slashPosRef.current
         if (!pos) return
-        skipNextSlashCheck.current = true
         isSlashOpenRef.current = false
+
+        const selfClosing = (comp as { selfClosing?: boolean }).selfClosing ?? false
+        const propsEntries = Object.entries(comp.defaultProps || {})
+        const propsStr = propsEntries
+          .map(([key, v]) => {
+            if (v === true) return key
+            if (typeof v === 'string') return `${key}="${v}"`
+            return `${key}={${JSON.stringify(v)}}`
+          })
+          .join(' ')
+
+        const attrs = [
+          `data-component="${comp.label}"`,
+          `data-props='${JSON.stringify(comp.defaultProps || {}).replace(/'/g, '&#39;')}'`,
+          `data-slot="${(comp.defaultSlot || '').replace(/"/g, '&quot;').replace(/\n/g, '&#10;')}"`,
+          `data-self-closing="${selfClosing}"`,
+        ].join(' ')
+
         editor
           .chain()
           .focus()
           .deleteRange({ from: pos.from, to: pos.to })
-          .insertContent(`<${comp.label}>...</${comp.label}>`)
+          .insertContent(`<mdx-component ${attrs}></mdx-component>\n\n`)
           .run()
         setSlashMenu(null)
       },

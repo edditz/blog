@@ -2,6 +2,17 @@
 import { getCollection, render } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import Badge from "@/components/ui/Badge.astro";
+import Callout from "@/components/ui/Callout.astro";
+import Quote from "@/components/ui/Quote.astro";
+import ProsCons from "@/components/ui/ProsCons.astro";
+import Steps from "@/components/ui/Steps.astro";
+import Tabs from "@/components/ui/Tabs.astro";
+import TabItem from "@/components/ui/TabItem.astro";
+import Figure from "@/components/ui/Figure.astro";
+import LinkCard from "@/components/ui/LinkCard.astro";
+import YouTube from "@/components/ui/YouTube.astro";
+import Divider from "@/components/ui/Divider.astro";
+import Separator from "@/components/ui/Separator.astro";
 import MobileTOC from "@/components/posts/MobileTOC.astro";
 import DesktopTOC from "@/components/posts/DesktopTOC.astro";
 import ShareButtons from "@/components/posts/ShareButtons.astro";
@@ -171,7 +182,7 @@ const relatedPosts = allEntries
             <div class="flex-1 w-full max-w-full">
                 <div class="prose-blog">
                     <div class="drop-cap">
-                        <Content />
+                        <Content components={{ Badge, Callout, Quote, ProsCons, Steps, Tabs, TabItem, Figure, LinkCard, YouTube, Divider, Separator }} />
                     </div>
                 </div>
             </div>
