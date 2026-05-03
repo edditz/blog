@@ -42,6 +42,7 @@ cd blog-admin && pnpm dev   # Start admin backend + frontend
 | Layout architecture | [src/layouts/DESIGN_NOTES.md](src/layouts/DESIGN_NOTES.md) |
 | Blog admin system | [docs/blog-admin.md](docs/blog-admin.md) |
 | Admin API testing | [docs/blog-admin.md#testing](docs/blog-admin.md#testing) |
+| MDX 组件接入编辑器 | [docs/mdx-component-guide.md](docs/mdx-component-guide.md) |
 
 ## Path Aliases
 

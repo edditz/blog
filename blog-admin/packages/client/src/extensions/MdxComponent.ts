@@ -6,6 +6,16 @@ import type { NodeViewProps } from '@tiptap/react'
 import React from 'react'
 import { CalloutView } from '@/components/editor/CalloutView'
 import { QuoteView } from '@/components/editor/QuoteView'
+import { TabsView } from '@/components/editor/TabsView'
+import { TabItemView } from '@/components/editor/TabItemView'
+import { StepsView } from '@/components/editor/StepsView'
+import { ProsConsView } from '@/components/editor/ProsConsView'
+import { LinkCardView } from '@/components/editor/LinkCardView'
+import { FigureView } from '@/components/editor/FigureView'
+import { YouTubeView } from '@/components/editor/YouTubeView'
+import { DividerView } from '@/components/editor/DividerView'
+import { BadgeView } from '@/components/editor/BadgeView'
+import { SeparatorView } from '@/components/editor/SeparatorView'
 
 const COMPONENT_COLORS: Record<string, { accent: string; bg: string; badge: string }> = {
   Callout: { accent: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30', badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
@@ -128,13 +138,25 @@ export const MdxComponent = Node.create({
   },
 
   addNodeView() {
+    const viewMap: Record<string, React.ComponentType<NodeViewProps>> = {
+      Callout: CalloutView,
+      Quote: QuoteView,
+      Tabs: TabsView,
+      TabItem: TabItemView,
+      Steps: StepsView,
+      ProsCons: ProsConsView,
+      LinkCard: LinkCardView,
+      Figure: FigureView,
+      YouTube: YouTubeView,
+      Divider: DividerView,
+      Badge: BadgeView,
+      Separator: SeparatorView,
+    }
     return ReactNodeViewRenderer((props: NodeViewProps) => {
       const component = props.node.attrs.component as string
-      if (component === 'Callout') {
-        return React.createElement(CalloutView, props)
-      }
-      if (component === 'Quote') {
-        return React.createElement(QuoteView, props)
+      const View = viewMap[component]
+      if (View) {
+        return React.createElement(View, props)
       }
       return React.createElement(MdxComponentView, props)
     })
