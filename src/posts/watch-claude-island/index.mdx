@@ -1,0 +1,368 @@
+---
+title: "手腕上的Claude Code"
+date: "05/30/2026"
+updatedDate: ""
+frontmatter: "通过 ntfy 通知服务，将 Claude Code 的审批请求和完成事件实时推送到 iPhone/Apple Watch，让你不用守着终端等它完成。"
+tags: ["AI", "Claude Code", "ntfy", "watch"]
+draft: false
+---
+
+import Grid from '@/components/ui/Grid.astro';
+import img1 from './images/9c8d921392e976ae.jpg';
+import img2 from './images/2fe64e67bd190a4d.jpg';
+import img3 from './images/2e215c83fb0ebe4e.png';
+import img4 from './images/dc0a728816f351f0.png';
+
+> 让 Claude Code 的工作通知推送到你的 Apple Watch，再也不用盯着屏幕等它完成。
+
+## 背景
+
+Claude Code 是一个强大的 AI 编程助手，但它有一个痛点：执行任务时你需要一直盯着终端，等待它完成或需要你审批。特别是长时间运行的任务，你不得不守在电脑前。
+
+我的解决方案：通过 [ntfy](https://ntfy.sh) 通知服务，将 Claude Code 的关键事件实时推送到 iPhone/Apple Watch。
+
+## 效果
+
+当 Claude Code 触发以下事件时，你的手表会震动：
+
+- **需要审批** — Claude 想执行需要确认的操作（如写文件、运行命令）时，立即通知你
+- **任务完成** — Claude 停止工作时，通知你回来查看结果
+
+## 架构
+
+<Figure src={img3.src} alt="整体架构图" caption="整体架构图" />
+
+就这么简单。没有复杂的中间件，没有云服务依赖。
+
+## 你需要准备的
+
+1. 一台运行 Claude Code 的电脑（Mac/Linux/Windows）
+2. 一部手机（iOS/Android 均可）
+3. 一块智能手表（可选，但强烈推荐）
+
+> **关于设备选择：** 其实任何手机都能收到通知，但如果你想在手表上也收到通知，最好手机和手表是一个厂商的，这样手机和手表的互联体验会好很多。比如 iPhone + Apple Watch、小米手机 + 小米手表、华为手机 + 华为手表等，同厂商的设备之间通知转发、震动提醒等体验会顺畅很多。
+
+本文以 iPhone + Apple Watch 为例，其他设备的 App 名称和配置方式类似。
+
+## 完整搭建步骤
+
+### 第一步：安装 ntfy CLI
+
+在你的电脑上安装 ntfy 命令行工具：
+
+```bash
+# macOS
+brew install ntfy
+
+# Linux (Debian/Ubuntu)
+curl -sSL https://packages.ntfy.sh/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/ntfy.gpg
+echo "deb [signed-by=/etc/apt/keyrings/ntfy.gpg] https://packages.ntfy.sh/stable/ debian main" | sudo tee /etc/apt/sources.list.d/ntfy.list
+sudo apt update && sudo apt install ntfy
+
+# Windows (Scoop)
+scoop install ntfy
+```
+
+### 第二步：生成 Topic
+
+Topic 是你的通知频道名称，越随机越好，防止别人撞到：
+
+```bash
+# 生成一个随机 topic
+TOPIC="claude-$(openssl rand -hex 16)"
+echo "你的 topic: $TOPIC"
+```
+
+记下这个 topic，后面要用。
+
+### 第三步：验证 ntfy.sh 可用
+
+先测试一下 ntfy.sh 公共服务是否正常工作：
+
+```bash
+# 替换 your-topic-name 为你上一步生成的 topic
+ntfy publish -m "Hello from Claude Code" your-topic-name
+```
+
+如果一切正常，你会在手机上收到一条通知。
+
+### 第四步：iPhone 安装 ntfy App
+
+1. App Store 搜索 "ntfy" 并安装
+2. 打开 App，进入设置
+3. 确保服务器地址是 `https://ntfy.sh`（默认就是）
+4. 订阅你的 topic（在 App 中搜索你的 topic 名称）
+
+### 第五步：编写 Hook 脚本
+
+创建文件 `~/.claude/hooks/ntfy-notify.sh`：
+
+```bash
+#!/bin/bash
+# Claude Code 通知推送到 ntfy（转发到 iPhone/Apple Watch）
+
+# ===== 配置 =====
+# 替换为你在第二步生成的 topic
+NTFY_TOPIC="${NTFY_TOPIC:-your-topic-name}"
+
+# 读取 Claude Code 传入的 JSON
+input=$(cat)
+
+# 解析事件类型
+event_type=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('hook_event_name',''))" 2>/dev/null)
+
+# 发送通知的函数
+send_notification() {
+    local title="$1"
+    local message="${2:-·}"
+    local priority="${3:-3}"
+    local tags="${4:-}"
+
+    local -a args=(--title "${title}" --priority "${priority}" --quiet)
+    if [ -n "$tags" ]; then
+        args+=(--tags "${tags}")
+    fi
+
+    # & 表示后台执行，不阻塞 Claude Code
+    ntfy publish "${args[@]}" -m "${message}" "${NTFY_TOPIC}" &
+}
+
+# 根据事件类型发送不同通知
+case "$event_type" in
+    PermissionRequest)
+        # 需要审批时：提取工具名称
+        tool_name=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_name',''))" 2>/dev/null)
+        send_notification "Claude 需要审批" "$tool_name" "4" "bell"
+        ;;
+    Stop)
+        # 停止时：提取最后一条消息的前 100 个字符
+        message=$(echo "$input" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+msg = d.get('last_assistant_message','')
+print(msg[:100]) if msg else print('')
+" 2>/dev/null)
+        send_notification "Claude 已停止" "$message" "3" "check"
+        ;;
+esac
+```
+
+赋予执行权限：
+
+```bash
+chmod +x ~/.claude/hooks/ntfy-notify.sh
+```
+
+### 第六步：配置 Claude Code
+
+编辑 `~/.claude/settings.json`，添加以下内容：
+
+```json
+{
+  "env": {
+    "NTFY_TOPIC": "your-topic-name"
+  },
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "command": "bash ~/.claude/hooks/ntfy-notify.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "bash ~/.claude/hooks/ntfy-notify.sh",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+把 `your-topic-name` 替换为你在第二步生成的 topic。
+
+### 第七步：测试
+
+```bash
+# 手动测试脚本是否正常工作
+echo '{"hook_event_name":"Stop","last_assistant_message":"测试消息"}' | bash ~/.claude/hooks/ntfy-notify.sh
+```
+
+如果手表收到通知，大功告成！现在你可以启动一个新的 Claude Code 会话，让它帮你干活，然后放心去做别的事情。
+
+## 通知优先级说明
+
+ntfy 支持 5 个优先级：
+
+| 优先级 | 说明 | 用途 |
+|--------|------|------|
+| 1 | 最低 | 日志类通知 |
+| 2 | 低 | 非紧急信息 |
+| 3 | 默认 | 普通通知（任务完成） |
+| 4 | 高 | 需要注意（需要审批） |
+| 5 | 紧急 | 持续振动直到查看 |
+
+## 可用的 Emoji Tags
+
+通知可以带 emoji 标签，常用：
+
+- `bell` 🔔 — 铃铛
+- `check` ✔️ — 完成
+- `warning` ⚠️ — 警告
+- `rotating_light` 🚨 — 紧急
+- `question` ❓ — 疑问
+- `tada` 🎉 — 庆祝
+- `skull` 💀 — 崩溃
+- `computer` 💻 — 电脑
+
+也支持直接用任意 emoji：`--tags=🤖,⚡`
+
+## 更多 Hook 事件
+
+Claude Code 还支持其他 Hook 事件，你可以按需添加：
+
+| 事件 | 触发时机 |
+|------|----------|
+| `SessionStart` | 会话开始 |
+| `SessionEnd` | 会话结束 |
+| `PreToolUse` | 工具执行前 |
+| `PostToolUse` | 工具执行后 |
+| `SubagentStop` | 子任务完成 |
+| `Notification` | 通知事件 |
+
+只需在 `hooks` 配置中添加对应的事件名称即可。
+
+## 效果展示
+
+
+<Grid cols={2} caption="通知效果展示">
+  <div>
+    <img src={img1.src} alt="审批通知" class="rounded-lg" />
+  </div>
+  <div>
+    <img src={img2.src} alt="完成通知" class="rounded-lg" />
+  </div>
+</Grid>
+
+## 进阶：自建 ntfy 服务器
+
+使用公共 ntfy.sh 服务零成本、零配置，但如果你想：
+
+- 完全掌控数据，不经过第三方
+- 使用 token 认证，防止任何人向你发通知
+- 搭配域名，更专业
+
+可以自建 ntfy 服务器。
+
+### 部署服务器
+
+在你的 VPS 上用 Docker 一键部署：
+
+```bash
+docker run -d \
+  --name ntfy \
+  -p 80:80 \
+  -v /var/cache/ntfy:/var/cache/ntfy \
+  -v /etc/ntfy:/etc/ntfy \
+  binwiederhier/ntfy serve \
+  --cache-file /var/cache/ntfy/cache.db
+```
+
+如果需要 HTTPS，建议配合 Nginx 反向代理 + Let's Encrypt 证书。
+
+### 配置用户认证
+
+```bash
+# 创建管理员用户
+docker exec ntfy ntfy user add --role=admin myuser
+
+# 生成访问 token
+docker exec ntfy ntfy token add myuser
+```
+
+### 配置 ntfy CLI
+
+创建配置文件 `~/.config/ntfy/client.yml`：
+
+```yaml
+default-host: https://your-server.com
+```
+
+如果你的服务器使用自签名证书或非标准端口：
+
+```yaml
+default-host: https://your-server.com:2580
+```
+
+### 修改 Hook 脚本
+
+在脚本中添加 token 认证：
+
+```bash
+export NTFY_TOKEN="your-token-here"
+```
+
+### iOS 推送问题
+
+自建服务器有一个坑：**iOS 推送通知无法直接工作**。
+
+原因是 ntfy 官方 App 使用 ntfy.sh 的 Firebase 项目来发送 iOS 推送。自建服务器没有 Firebase 配置，所以 App 在后台时收不到推送。
+
+解决方案：
+
+<Figure src={img4.src} alt="上游中继工作原理" caption="上游中继工作原理" />
+
+在服务器配置中添加上游中继：
+
+```yaml
+# /etc/ntfy/server.yml
+upstream-base-url: "https://ntfy.sh"
+```
+
+这样 ntfy.sh 会作为推送中继，只负责唤醒设备，消息内容仍从你的服务器获取。
+
+### 多设备订阅
+
+同一个 topic 可以被多个设备订阅：
+
+- iPhone 收到通知
+- iPad 同时收到通知
+- Apple Watch 通过 iPhone 转发收到通知
+
+## 常见问题
+
+**Q: 通知延迟高吗？**
+
+A: 几乎实时。本地 CLI 发送到服务器通常 < 100ms，服务器推送到手机通常 < 1s。
+
+**Q: 安全吗？别人能看到我的通知吗？**
+
+A: 使用公共 ntfy.sh 时，topic 名字随机生成（如 `claude-a3f8b2c1d4e5...`）基本不可能被猜到。自建服务器 + token 认证更安全。
+
+**Q: 耗电吗？**
+
+A: ntfy App 使用 Apple 推送服务（APNs），非常省电。不会持续后台运行。
+
+**Q: 免费吗？**
+
+A: ntfy.sh 免费版完全够用。自建服务器成本约 $5/月的 VPS。
+
+**Q: 能看到 Claude 具体在做什么吗？**
+
+A: 目前只推送关键事件。如果需要更详细的状态，可以在 Hook 中解析更多字段。
+
+## 参考资源
+
+- [ntfy 官方文档](https://docs.ntfy.sh/) — 完整的安装、配置和 API 参考
+
+*如果觉得有用，欢迎分享给同样在用 Claude Code 的朋友。*
+

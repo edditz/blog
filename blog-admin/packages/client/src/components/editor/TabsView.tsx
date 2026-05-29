@@ -226,18 +226,18 @@ export function TabsView({ node, updateAttributes }: NodeViewProps) {
   return (
     <NodeViewWrapper className="my-3">
       <div
-        className="group/edit relative rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden"
+        className="group/edit relative rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="flex items-center overflow-x-auto border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
+        <div className="flex items-center overflow-x-auto border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {tabs.map((tab, i) => (
             <div
               key={i}
-              className={`flex items-center gap-1 px-4 py-2.5 text-sm border-r border-neutral-200 dark:border-neutral-700 last:border-r-0 ${
+              className={`flex items-center gap-1 px-4 py-2.5 text-sm transition-colors shrink-0 ${
                 i === activeTab
-                  ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white font-medium'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+                  ? 'text-indigo-600 dark:text-indigo-400 font-medium relative after:content-[\'\'] after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:bg-indigo-600 dark:after:bg-indigo-400'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
               }`}
             >
               <button
@@ -288,7 +288,7 @@ export function TabsView({ node, updateAttributes }: NodeViewProps) {
           suppressContentEditableWarning
           onBlur={handleContentBlur}
           onKeyDown={handleKeyDown}
-          className="bg-white dark:bg-neutral-900 p-4 prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 outline-none empty:before:content-['Type_tab_content...'] empty:before:opacity-40 min-h-[3rem]"
+          className="bg-white dark:bg-neutral-950 p-4 prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 outline-none empty:before:content-['Type_tab_content...'] empty:before:opacity-40 min-h-[3rem]"
         >
           {slot}
         </div>
@@ -301,7 +301,7 @@ export function TabsView({ node, updateAttributes }: NodeViewProps) {
                 setSavedScrollTop(container?.scrollTop ?? 0)
                 setIsDialogOpen(true)
               }}
-              className="flex items-center justify-center w-7 h-7 rounded-md bg-white/80 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 shadow-sm hover:bg-white dark:hover:bg-neutral-800 transition-colors"
+              className="flex items-center justify-center w-7 h-7 rounded-md bg-white/80 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-800 shadow-sm hover:bg-white dark:hover:bg-neutral-800 transition-colors"
               aria-label="Edit tabs"
             >
               <Pencil size={14} className="text-neutral-600 dark:text-neutral-400" />

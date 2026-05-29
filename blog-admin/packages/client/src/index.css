@@ -127,6 +127,11 @@
   font-style: italic;
 }
 
+/* Inline node views (e.g. Badge) */
+.tiptap > .react-renderer:has(> .inline) {
+  display: inline;
+}
+
 /* Remove focus outline on editor */
 .tiptap:focus,
 .tiptap:focus-visible {
@@ -145,4 +150,34 @@
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/* Steps component — matches blog's .steps-container */
+.steps-container > * {
+  position: relative;
+}
+.steps-container > * > *:first-child {
+  margin-top: 0;
+}
+/* Disable dot on wrapper div (editor-only); inner elements get their own dots */
+.steps-container > *::before {
+  display: none;
+}
+.steps-container > * > * {
+  position: relative;
+}
+.steps-container > * > *::before {
+  content: "";
+  position: absolute;
+  left: -30px;
+  top: 18px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-indigo-500, #6366f1);
+  box-shadow: 0 0 0 6px var(--color-white, #ffffff);
+  z-index: 10;
+}
+.dark .steps-container > * > *::before {
+  box-shadow: 0 0 0 6px var(--color-neutral-950, #0a0a0a);
 }

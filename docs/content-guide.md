@@ -62,7 +62,11 @@ This creates a new MDX file in `src/posts/` with today's date and slugified file
 
 1. **One post per file** — no multi-post files
 2. **Date format** — always MM/DD/YYYY string (e.g., `"01/15/2024"`)
-3. **Images** — place in `src/assets/images/`, reference with relative path
+3. **Images** — place in `src/assets/images/`, import and use:
+   ```mdx
+   import myImage from '@/assets/images/my-image.jpg';
+   <img src={myImage.src} alt="description" />
+   ```
 4. **MDX components** — import from `@/components/ui/` (Callout, Tabs, Quote, etc.)
 5. **Draft posts** — set `draft: true` to exclude from build
 
@@ -80,7 +84,41 @@ import LinkCard from '@/components/ui/LinkCard.astro';
 import YouTube from '@/components/ui/YouTube.astro';
 import Steps from '@/components/ui/Steps.astro';
 import Figure from '@/components/ui/Figure.astro';
+import Grid from '@/components/ui/Grid.astro';
 import Divider from '@/components/ui/Divider.astro';
 import Separator from '@/components/ui/Separator.astro';
 import Badge from '@/components/ui/Badge.astro';
 ```
+
+## Grid Component
+
+Display content in columns:
+
+```mdx
+import Grid from '@/components/ui/Grid.astro';
+
+<!-- Two columns -->
+<Grid cols={2} caption="对比图">
+  <Figure src="./images/before.jpg" alt="Before" />
+  <Figure src="./images/after.jpg" alt="After" />
+</Grid>
+
+<!-- Three columns -->
+<Grid cols={3}>
+  <div class="p-4 border rounded-lg">Card 1</div>
+  <div class="p-4 border rounded-lg">Card 2</div>
+  <div class="p-4 border rounded-lg">Card 3</div>
+</Grid>
+
+<!-- Custom gap -->
+<Grid cols={2} gap="lg">
+  <img src="./images/a.jpg" alt="A" class="rounded-lg" />
+  <img src="./images/b.jpg" alt="B" class="rounded-lg" />
+</Grid>
+```
+
+Props:
+- `cols` — `2` (default) | `3` | `4`
+- `gap` — `"sm"` | `"md"` (default) | `"lg"`
+- `caption` — optional caption text
+- Responsive: single column on mobile, specified columns on desktop
