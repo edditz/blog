@@ -85,6 +85,7 @@ import YouTube from '@/components/ui/YouTube.astro';
 import Steps from '@/components/ui/Steps.astro';
 import Figure from '@/components/ui/Figure.astro';
 import Grid from '@/components/ui/Grid.astro';
+import Image from '@/components/ui/Image.astro';
 import Divider from '@/components/ui/Divider.astro';
 import Separator from '@/components/ui/Separator.astro';
 import Badge from '@/components/ui/Badge.astro';
@@ -122,3 +123,19 @@ Props:
 - `gap` — `"sm"` | `"md"` (default) | `"lg"`
 - `caption` — optional caption text
 - Responsive: single column on mobile, specified columns on desktop
+
+## Image Component
+
+Click to zoom image:
+
+```mdx
+import Image from '@/components/ui/Image.astro';
+
+<Image src="./images/screenshot.jpg" alt="Screenshot" caption="点击图片放大查看" />
+```
+
+Props:
+- `src` — image source (required)
+- `alt` — alt text (required)
+- `caption` — optional caption text
+- Features: click to open, click overlay or press Escape to close, hover scale effect

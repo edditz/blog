@@ -8,6 +8,7 @@ draft: false
 ---
 
 import Grid from '@/components/ui/Grid.astro';
+import Image from '@/components/ui/Image.astro';
 import img1 from './images/9c8d921392e976ae.jpg';
 import img2 from './images/2fe64e67bd190a4d.jpg';
 import img3 from './images/2e215c83fb0ebe4e.png';
@@ -30,7 +31,7 @@ Claude Code 是一个强大的 AI 编程助手，但它有一个痛点：执行�
 
 ## 架构
 
-<Figure src={img3.src} alt="整体架构图" caption="整体架构图" />
+<Image src={img3.src} alt="整体架构图" caption="整体架构图" />
 
 就这么简单。没有复杂的中间件，没有云服务依赖。
 
@@ -245,12 +246,8 @@ Claude Code 还支持其他 Hook 事件，你可以按需添加：
 
 
 <Grid cols={2} caption="通知效果展示">
-  <div>
-    <img src={img1.src} alt="审批通知" class="rounded-lg" />
-  </div>
-  <div>
-    <img src={img2.src} alt="完成通知" class="rounded-lg" />
-  </div>
+  <Image src={img1.src} alt="审批通知" />
+  <Image src={img2.src} alt="完成通知" />
 </Grid>
 
 ## 进阶：自建 ntfy 服务器
@@ -319,7 +316,7 @@ export NTFY_TOKEN="your-token-here"
 
 解决方案：
 
-<Figure src={img4.src} alt="上游中继工作原理" caption="上游中继工作原理" />
+<Image src={img4.src} alt="上游中继工作原理" caption="上游中继工作原理" />
 
 在服务器配置中添加上游中继：
 

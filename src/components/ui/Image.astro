@@ -1,0 +1,410 @@
+---
+export interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+  class?: string;
+}
+
+const {
+  src,
+  alt,
+  caption,
+  class: className = '',
+} = Astro.props;
+---
+
+<figure class:list={['my-8', className]}>
+  <button
+    type="button"
+    class="lightbox-trigger group cursor-zoom-in w-full"
+    data-src={src}
+    data-alt={alt}
+  >
+    <div class="lightbox-thumb-wrap overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-sm bg-neutral-100 dark:bg-neutral-900">
+      <img src={src} alt={alt} class="lightbox-thumb m-0 h-auto w-full object-cover align-middle block" loading="lazy" />
+    </div>
+  </button>
+  {caption && (
+    <figcaption class="mt-3 text-sm text-neutral-500 dark:text-neutral-400 text-center italic">
+      {caption}
+    </figcaption>
+  )}
+</figure>
+
+<script>
+  if (!window.__lightboxInitialized) {
+    window.__lightboxInitialized = true;
+
+    let activeWrap: HTMLDivElement | null = null;
+    let overlay: HTMLDivElement | null = null;
+    let toolbar: HTMLDivElement | null = null;
+    let isAnimating = false;
+    let isOpen = false;
+    let closeTimeoutId: number | null = null;
+    let currentScale = 1;
+    let currentRotate = 0;
+    let storedTranslate = { x: 0, y: 0 };
+    let storedBaseScale = 1;
+
+    // Add hover effect
+    const style = document.createElement('style');
+    style.textContent = `
+      .lightbox-trigger {
+        outline: none;
+      }
+      .lightbox-trigger:focus-visible {
+        outline: 2px solid var(--accent, hsl(19, 82%, 40%));
+        outline-offset: 2px;
+        border-radius: 12px;
+      }
+      .lightbox-trigger:not(.lightbox-active) .lightbox-thumb-wrap {
+        transition: transform 0.3s ease;
+      }
+      .lightbox-trigger:not(.lightbox-active):hover .lightbox-thumb-wrap {
+        transform: scale(1.02);
+      }
+      #lightbox-toolbar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10001;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(12px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      #lightbox-toolbar button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        position: relative;
+      }
+      #lightbox-toolbar button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      #lightbox-toolbar button::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        font-size: 12px;
+        white-space: nowrap;
+        border-radius: 6px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+      }
+      #lightbox-toolbar button:hover::after {
+        opacity: 1;
+      }
+      #lightbox-toolbar .divider {
+        width: 1px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+    `;
+    document.head.appendChild(style);
+
+    const getOverlay = () => {
+      if (overlay) return overlay;
+      overlay = document.createElement('div');
+      overlay.id = 'lightbox-overlay';
+      overlay.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 9998;
+        display: none;
+        background: transparent;
+        transition: background 0.35s ease;
+        cursor: zoom-out;
+      `;
+      overlay.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        close();
+      });
+      document.body.appendChild(overlay);
+      return overlay;
+    };
+
+    const getToolbar = () => {
+      if (toolbar) return toolbar;
+      toolbar = document.createElement('div');
+      toolbar.id = 'lightbox-toolbar';
+      toolbar.innerHTML = `
+        <button data-action="zoom-in" data-tooltip="放大 (+)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+        <button data-action="zoom-out" data-tooltip="缩小 (-)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+        <button data-action="reset" data-tooltip="重置 (0)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+        </button>
+        <div class="divider"></div>
+        <button data-action="rotate-left" data-tooltip="逆时针旋转">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38L2.5 8"></path>
+          </svg>
+        </button>
+        <button data-action="rotate-right" data-tooltip="顺时针旋转">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38L21.5 8"></path>
+          </svg>
+        </button>
+        <div class="divider"></div>
+        <button data-action="close" data-tooltip="退出 (Esc)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      `;
+      toolbar.addEventListener('click', (e) => {
+        const btn = (e.target as Element).closest('button');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        handleAction(action);
+      });
+      document.body.appendChild(toolbar);
+      return toolbar;
+    };
+
+    const handleAction = (action: string | null) => {
+      if (action === 'close') {
+        close();
+        return;
+      }
+      if (!activeWrap || !isOpen) return;
+      switch (action) {
+        case 'zoom-in':
+          currentScale = Math.min(currentScale + 0.25, 5);
+          break;
+        case 'zoom-out':
+          currentScale = Math.max(currentScale - 0.25, 0.25);
+          break;
+        case 'reset':
+          currentScale = 1;
+          currentRotate = 0;
+          break;
+        case 'rotate-left':
+          currentRotate -= 90;
+          break;
+        case 'rotate-right':
+          currentRotate += 90;
+          break;
+      }
+      applyTransform();
+    };
+
+    const applyTransform = () => {
+      if (!activeWrap) return;
+      const finalScale = storedBaseScale * currentScale;
+      activeWrap.style.transition = 'transform 0.2s ease';
+      activeWrap.style.transform = `translate(${storedTranslate.x}px, ${storedTranslate.y}px) scale(${finalScale}) rotate(${currentRotate}deg)`;
+    };
+
+    const getBaseScale = (rect: DOMRect, naturalW: number, naturalH: number) => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const pad = 80;
+      const targetW = vw - pad * 2;
+      const targetH = vh - pad * 2;
+      const scaleW = targetW / rect.width;
+      const scaleH = targetH / rect.height;
+      const naturalScaleW = targetW / naturalW;
+      const naturalScaleH = targetH / naturalH;
+      return Math.min(scaleW, scaleH, naturalScaleW * (naturalW / rect.width), naturalScaleH * (naturalH / rect.height));
+    };
+
+    const getTranslate = (rect: DOMRect) => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const currentCenterX = rect.left + rect.width / 2;
+      const currentCenterY = rect.top + rect.height / 2;
+      return {
+        x: (vw / 2) - currentCenterX,
+        y: (vh / 2) - currentCenterY
+      };
+    };
+
+    const open = (trigger: Element) => {
+      if (isAnimating || isOpen) return;
+      isAnimating = true;
+
+      const thumb = trigger.querySelector('.lightbox-thumb') as HTMLImageElement;
+      const wrap = trigger.querySelector('.lightbox-thumb-wrap') as HTMLDivElement;
+      if (!thumb || !wrap) { isAnimating = false; return; }
+
+      activeWrap = wrap;
+      currentScale = 1;
+      currentRotate = 0;
+      const rect = wrap.getBoundingClientRect();
+      storedTranslate = getTranslate(rect);
+      storedBaseScale = getBaseScale(rect, thumb.naturalWidth, thumb.naturalHeight);
+
+      trigger.classList.add('lightbox-active');
+
+      const ov = getOverlay();
+      const tb = getToolbar();
+      ov.style.display = 'block';
+
+      // Disable page scroll
+      document.body.style.overflow = 'hidden';
+
+      wrap.style.transformOrigin = 'center center';
+      wrap.style.zIndex = '9999';
+      wrap.style.position = 'relative';
+
+      void wrap.offsetHeight;
+
+      wrap.style.transition = 'transform 0.35s cubic-bezier(0.2, 0, 0.2, 1)';
+      wrap.style.transform = `translate(${storedTranslate.x}px, ${storedTranslate.y}px) scale(${storedBaseScale})`;
+      wrap.style.borderRadius = '0';
+      wrap.style.borderWidth = '0';
+      wrap.style.background = 'transparent';
+      wrap.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
+      ov.style.background = 'rgba(0, 0, 0, 0.8)';
+
+      closeTimeoutId = window.setTimeout(() => {
+        isAnimating = false;
+        isOpen = true;
+        tb.style.display = 'flex';
+        closeTimeoutId = null;
+      }, 350);
+    };
+
+    const close = () => {
+      if (isAnimating || !isOpen || !activeWrap) return;
+      isAnimating = true;
+      isOpen = false;
+
+      const wrap = activeWrap;
+      const trigger = wrap.closest('.lightbox-trigger');
+      const ov = getOverlay();
+      const tb = getToolbar();
+
+      tb.style.display = 'none';
+
+      // Re-enable page scroll
+      document.body.style.overflow = '';
+
+      wrap.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0.2, 1), border-radius 0.3s ease, box-shadow 0.3s ease';
+      wrap.style.transform = '';
+      wrap.style.borderRadius = '';
+      wrap.style.borderWidth = '';
+      wrap.style.background = '';
+      wrap.style.boxShadow = '';
+      ov.style.background = 'transparent';
+
+      if (trigger) trigger.classList.remove('lightbox-active');
+
+      closeTimeoutId = window.setTimeout(() => {
+        wrap.style.transformOrigin = '';
+        wrap.style.zIndex = '';
+        wrap.style.position = '';
+        wrap.style.transition = '';
+
+        ov.style.display = 'none';
+
+        activeWrap = null;
+        isAnimating = false;
+        closeTimeoutId = null;
+      }, 300);
+    };
+
+    document.addEventListener('click', (e) => {
+      const trigger = (e.target as Element).closest('.lightbox-trigger');
+      if (trigger) {
+        e.preventDefault();
+        e.stopPropagation();
+        open(trigger);
+      }
+    });
+
+    // Click on image in lightbox mode to zoom in
+    document.addEventListener('click', (e) => {
+      if (!isOpen || isAnimating || !activeWrap) return;
+      const clickedWrap = (e.target as Element).closest('.lightbox-thumb-wrap');
+      if (clickedWrap && clickedWrap === activeWrap) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleAction('zoom-in');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!isOpen || isAnimating) return;
+      if (e.key === 'Escape') close();
+      if (e.key === '+' || e.key === '=') handleAction('zoom-in');
+      if (e.key === '-') handleAction('zoom-out');
+      if (e.key === '0') handleAction('reset');
+    });
+
+    // Trackpad pinch-to-zoom support
+    document.addEventListener('wheel', (e) => {
+      if (!isOpen || isAnimating || !activeWrap) return;
+      // Mac trackpad pinch gesture sends wheel event with ctrlKey: true
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const delta = -e.deltaY;
+      const zoomStep = 0.05;
+      if (delta > 0) {
+        currentScale = Math.min(currentScale + zoomStep, 5);
+      } else {
+        currentScale = Math.max(currentScale - zoomStep, 0.25);
+      }
+      applyTransform();
+    }, { passive: false });
+
+    window.addEventListener('resize', () => {
+      if (!isOpen || !activeWrap) return;
+      const thumb = activeWrap.querySelector('.lightbox-thumb') as HTMLImageElement;
+      if (!thumb) return;
+      const rect = activeWrap.getBoundingClientRect();
+      storedTranslate = getTranslate(rect);
+      storedBaseScale = getBaseScale(rect, thumb.naturalWidth, thumb.naturalHeight);
+      const finalScale = storedBaseScale * currentScale;
+      activeWrap.style.transition = 'none';
+      activeWrap.style.transform = `translate(${storedTranslate.x}px, ${storedTranslate.y}px) scale(${finalScale}) rotate(${currentRotate}deg)`;
+    });
+  }
+
+  declare global {
+    interface Window {
+      __lightboxInitialized: boolean;
+    }
+  }
+</script>
