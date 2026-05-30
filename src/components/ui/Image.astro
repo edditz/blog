@@ -47,6 +47,23 @@ const {
     let storedTranslate = { x: 0, y: 0 };
     let storedBaseScale = 1;
 
+    // Prevent double-tap zoom on mobile
+    const setViewportScale = (disable: boolean) => {
+      let meta = document.querySelector('meta[name="viewport"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', 'viewport');
+        document.head.appendChild(meta);
+      }
+      if (disable) {
+        meta.setAttribute('content', 'width=device-width, user-scalable=no, maximum-scale=1');
+        document.body.style.touchAction = 'none';
+      } else {
+        meta.setAttribute('content', 'width=device-width');
+        document.body.style.touchAction = '';
+      }
+    };
+
     // Add hover effect
     const style = document.createElement('style');
     style.textContent = `
@@ -78,6 +95,8 @@ const {
         backdrop-filter: blur(12px);
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.1);
+        touch-action: manipulation;
+        -ms-touch-action: manipulation;
       }
       #lightbox-toolbar button {
         display: flex;
@@ -92,6 +111,8 @@ const {
         cursor: pointer;
         transition: background 0.2s ease;
         position: relative;
+        touch-action: manipulation;
+        -ms-touch-action: manipulation;
       }
       #lightbox-toolbar button:hover {
         background: rgba(255, 255, 255, 0.2);
@@ -134,13 +155,8 @@ const {
         display: none;
         background: transparent;
         transition: background 0.35s ease;
-        cursor: zoom-out;
+        pointer-events: none;
       `;
-      overlay.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        close();
-      });
       document.body.appendChild(overlay);
       return overlay;
     };
@@ -229,10 +245,14 @@ const {
       applyTransform();
     };
 
-    const applyTransform = () => {
+    const applyTransform = (animate = true) => {
       if (!activeWrap) return;
       const finalScale = storedBaseScale * currentScale;
-      activeWrap.style.transition = 'transform 0.2s ease';
+      if (animate) {
+        activeWrap.style.transition = 'transform 0.2s ease';
+      } else {
+        activeWrap.style.transition = 'none';
+      }
       activeWrap.style.transform = `translate(${storedTranslate.x}px, ${storedTranslate.y}px) scale(${finalScale}) rotate(${currentRotate}deg)`;
     };
 
@@ -283,10 +303,13 @@ const {
 
       // Disable page scroll
       document.body.style.overflow = 'hidden';
+      setViewportScale(true);
+      ov.classList.add('lightbox-active');
 
       wrap.style.transformOrigin = 'center center';
       wrap.style.zIndex = '9999';
       wrap.style.position = 'relative';
+      wrap.style.touchAction = 'none';
 
       void wrap.offsetHeight;
 
@@ -310,6 +333,9 @@ const {
       if (isAnimating || !isOpen || !activeWrap) return;
       isAnimating = true;
       isOpen = false;
+      isDragging = false;
+      isPinching = false;
+      dragWrap = null;
 
       const wrap = activeWrap;
       const trigger = wrap.closest('.lightbox-trigger');
@@ -320,6 +346,8 @@ const {
 
       // Re-enable page scroll
       document.body.style.overflow = '';
+      setViewportScale(false);
+      ov.classList.remove('lightbox-active');
 
       wrap.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0.2, 1), border-radius 0.3s ease, box-shadow 0.3s ease';
       wrap.style.transform = '';
@@ -327,6 +355,8 @@ const {
       wrap.style.borderWidth = '';
       wrap.style.background = '';
       wrap.style.boxShadow = '';
+      wrap.style.touchAction = '';
+      ov.style.transition = 'background 0.3s ease';
       ov.style.background = 'transparent';
 
       if (trigger) trigger.classList.remove('lightbox-active');
@@ -338,6 +368,7 @@ const {
         wrap.style.transition = '';
 
         ov.style.display = 'none';
+        ov.style.transition = '';
 
         activeWrap = null;
         isAnimating = false;
@@ -358,10 +389,16 @@ const {
     document.addEventListener('click', (e) => {
       if (!isOpen || isAnimating || !activeWrap) return;
       const clickedWrap = (e.target as Element).closest('.lightbox-thumb-wrap');
+      const clickedToolbar = (e.target as Element).closest('#lightbox-toolbar');
       if (clickedWrap && clickedWrap === activeWrap) {
         e.preventDefault();
         e.stopPropagation();
         handleAction('zoom-in');
+      } else if (!clickedToolbar) {
+        // Click outside image and toolbar - close lightbox
+        e.preventDefault();
+        e.stopPropagation();
+        close();
       }
     });
 
@@ -386,8 +423,131 @@ const {
       } else {
         currentScale = Math.max(currentScale - zoomStep, 0.25);
       }
-      applyTransform();
+      applyTransform(false);
     }, { passive: false });
+
+    // Mobile touch handling - prevent page scroll, support pinch-to-zoom and drag-to-close
+    let initialPinchDistance = 0;
+    let initialScale = 1;
+    let isPinching = false;
+    let isDragging = false;
+    let dragStartY = 0;
+    let dragStartX = 0;
+    let dragDeltaY = 0;
+    let dragDeltaX = 0;
+    let dragStartTime = 0;
+    let dragWrap: HTMLElement | null = null;
+    const DRAG_THRESHOLD = 150;
+    const VELOCITY_THRESHOLD = 0.5; // px/ms
+    let rafId: number | null = null;
+
+    const resetDragState = () => {
+      if (dragWrap) {
+        const finalScale = storedBaseScale * currentScale;
+        dragWrap.style.transition = 'transform 0.3s ease';
+        dragWrap.style.transform = `translate(${storedTranslate.x}px, ${storedTranslate.y}px) scale(${finalScale}) rotate(${currentRotate}deg)`;
+      }
+      const ov = getOverlay();
+      ov.style.background = 'rgba(0, 0, 0, 0.8)';
+      const tb = getToolbar();
+      tb.style.opacity = '1';
+      isDragging = false;
+      dragDeltaY = 0;
+      dragDeltaX = 0;
+      dragWrap = null;
+    };
+
+    document.addEventListener('touchstart', (e) => {
+      if (!isOpen || isAnimating || !activeWrap) return;
+      if (e.touches.length === 2) {
+        isPinching = true;
+        isDragging = false;
+        initialPinchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialScale = currentScale;
+      } else if (e.touches.length === 1) {
+        isDragging = true;
+        dragStartY = e.touches[0].clientY;
+        dragStartX = e.touches[0].clientX;
+        dragDeltaY = 0;
+        dragDeltaX = 0;
+        dragStartTime = Date.now();
+        dragWrap = activeWrap;
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isOpen) return;
+      e.preventDefault();
+
+      if (isPinching && activeWrap && e.touches.length === 2) {
+        const currentDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const scale = (currentDistance / initialPinchDistance) * initialScale;
+        currentScale = Math.min(Math.max(scale, 0.25), 5);
+
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          applyTransform(false);
+          rafId = null;
+        });
+      } else if (isDragging && dragWrap && e.touches.length === 1) {
+        dragDeltaY = e.touches[0].clientY - dragStartY;
+        dragDeltaX = e.touches[0].clientX - dragStartX;
+        const dragDistance = Math.hypot(dragDeltaX, dragDeltaY);
+
+        const progress = Math.min(dragDistance / DRAG_THRESHOLD, 1);
+        // Use quadratic easing for smoother opacity transition
+        const easedProgress = progress * progress;
+        const overlayOpacity = 0.8 * (1 - easedProgress * 0.7);
+        const toolbarOpacity = 1 - easedProgress * 0.8;
+
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          if (dragWrap) {
+            const finalScale = storedBaseScale * currentScale;
+            dragWrap.style.transition = 'none';
+            dragWrap.style.transform = `translate(${storedTranslate.x + dragDeltaX}px, ${storedTranslate.y + dragDeltaY}px) scale(${finalScale}) rotate(${currentRotate}deg)`;
+          }
+          const ov = getOverlay();
+          ov.style.background = `rgba(0, 0, 0, ${overlayOpacity})`;
+          const tb = getToolbar();
+          tb.style.opacity = String(toolbarOpacity);
+          rafId = null;
+        });
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+      if (isPinching) {
+        isPinching = false;
+      }
+      if (isDragging && dragWrap) {
+        const dragDuration = Date.now() - dragStartTime;
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const dragDistance = Math.hypot(endX - dragStartX, endY - dragStartY);
+        const velocity = dragDuration > 0 ? dragDistance / dragDuration : 0;
+        const shouldClose = dragDistance > DRAG_THRESHOLD || (dragDistance > 30 && velocity > VELOCITY_THRESHOLD);
+
+        if (shouldClose) {
+          isDragging = false;
+          dragWrap = null;
+          close();
+        } else {
+          resetDragState();
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchcancel', () => {
+      if (isPinching) isPinching = false;
+      if (isDragging) resetDragState();
+    }, { passive: true });
 
     window.addEventListener('resize', () => {
       if (!isOpen || !activeWrap) return;
