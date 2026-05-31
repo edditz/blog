@@ -13,6 +13,9 @@ import img1 from './images/9c8d921392e976ae.jpg';
 import img2 from './images/2fe64e67bd190a4d.jpg';
 import img3 from './images/2e215c83fb0ebe4e.png';
 import img4 from './images/dc0a728816f351f0.png';
+import img5 from './images/IMG_0521.PNG';
+import img6 from './images/IMG_0522.PNG';
+import img7 from './images/IMG_0523.PNG';
 
 > 让 Claude Code 的工作通知推送到你的 Apple Watch，再也不用盯着屏幕等它完成。
 
@@ -90,9 +93,15 @@ ntfy publish -m "Hello from Claude Code" your-topic-name
 ### 第四步：iPhone 安装 ntfy App
 
 1. App Store 搜索 "ntfy" 并安装
-2. 打开 App，进入设置
-3. 确保服务器地址是 `https://ntfy.sh`（默认就是）
-4. 订阅你的 topic（在 App 中搜索你的 topic 名称）
+2. 打开 App，点击右上角加号
+3. 添加要订阅的 topic 和服务器地址，默认使用 `ntfy.sh`
+4. 查看 topic 的通知
+
+<Grid cols={3} caption="ntfy App 安装与配置">
+  <Image src={img5.src} alt="App Store 搜索 ntfy" />
+  <Image src={img6.src} alt="添加订阅 topic 和服务器地址" />
+  <Image src={img7.src} alt="查看 topic 通知" />
+</Grid>
 
 ### 第五步：编写 Hook 脚本
 
@@ -199,6 +208,78 @@ echo '{"hook_event_name":"Stop","last_assistant_message":"测试消息"}' | bash
 ```
 
 如果手表收到通知，大功告成！现在你可以启动一个新的 Claude Code 会话，让它帮你干活，然后放心去做别的事情。
+
+## 更简单的方式：使用 claude-notify-plugin
+
+上面的手动搭建虽然不难，但如果你想一键搞定，可以试试 [claude-notify-plugin](https://github.com/edditz/claude-notify-plugin) —— 一个 Claude Code 插件，把上面的所有配置封装成了三行命令。
+
+### 安装
+
+```bash
+# 1. 添加插件市场
+claude plugin marketplace add git@github.com:edditz/claude-plugins-marketplace.git
+
+# 2. 安装插件
+claude plugin install claude-notify-plugin@edditz-plugins
+
+# 3. 运行交互式配置向导
+/claude-notify-plugin:setup
+```
+
+向导会自动帮你：
+- 安装 ntfy CLI（如果还没装）
+- 配置通知 topic
+- 发送测试通知
+
+配置完成后，手机上订阅对应 topic 即可。
+
+### 额外功能
+
+相比手动配置，插件还提供了几个实用功能：
+
+- **智能终端检测** — 当你正在看终端时，自动跳过通知，不打扰
+- **手机端审批** — 通知里带 Approve/Deny 按钮，直接在手机上批准或拒绝，不用跑回电脑前
+- **一键开关** — `/claude-notify-plugin:toggle` 随时启用/关闭通知
+- **自定义模板** — 通知标题和内容支持变量（`{tool_name}`、`{message}`、`{project_name}`）
+- **跨平台** — 支持 macOS、Linux、Windows
+
+### 远程审批
+
+这是最酷的功能。在配置中开启：
+
+```
+NTFY_REMOTE_APPROVE=true
+NTFY_REMOTE_TIMEOUT=300
+```
+
+之后当 Claude 需要审批时，手机通知会附带操作按钮：
+
+```
+Claude 需要审批
+→ 手机收到带 Approve/Deny 按钮的通知
+→ 点击按钮 → ntfy 发送你的决定
+→ Claude 自动批准或拒绝
+```
+
+超过等待时间没响应，Claude Code 会正常弹出权限确认界面，不会卡住。
+
+> **提示：** 如果配置了 `NTFY_TOKEN`（自建服务器或 ntfy.sh 付费计划），远程审批会更安全；不配置也能正常使用。
+
+### 配置文件
+
+所有设置集中在 `~/.claude/plugins/claude-notify-plugin/config`：
+
+```
+NTFY_TOPIC=claude-a3f8b2c1d4e5f6
+NTFY_ENABLED=true
+NTFY_TERMINAL_CHECK=true
+NTFY_PERMISSION_TITLE=Claude 需要审批
+NTFY_PERMISSION_BODY={tool_name}
+NTFY_STOP_TITLE=Claude 已停止
+NTFY_STOP_BODY={message}
+```
+
+也支持自建 ntfy 服务器（`NTFY_HOST`、`NTFY_TOKEN`），配置方式同上文的"进阶"章节。
 
 ## 通知优先级说明
 
@@ -360,6 +441,7 @@ A: 目前只推送关键事件。如果需要更详细的状态，可以在 Hook
 ## 参考资源
 
 - [ntfy 官方文档](https://docs.ntfy.sh/) — 完整的安装、配置和 API 参考
+- [claude-notify-plugin](https://github.com/edditz/claude-notify-plugin) — 一键安装的 Claude Code 通知插件
 
 *如果觉得有用，欢迎分享给同样在用 Claude Code 的朋友。*
 
