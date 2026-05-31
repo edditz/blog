@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Personal blog built with Astro 6, Tailwind CSS v4, and the Serene Ink theme.
-Deployed to Aliyun OSS via GitHub Actions.
+Deployed to Aliyun ECS via `scripts/deploy.sh` (rsync).
 
 → [AGENTS.md](AGENTS.md) for full project map
 
@@ -16,6 +16,7 @@ npm run dev          # Start dev server
 npm run build        # Build static site
 npm run preview      # Preview production build
 npm run new-post     # Scaffold a new blog post
+bash scripts/deploy.sh  # Build and deploy to production
 
 # Blog Admin (独立项目)
 cd blog-admin && pnpm dev   # Start admin backend + frontend

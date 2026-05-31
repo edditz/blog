@@ -2,40 +2,25 @@
 
 ## Platform
 
-Aliyun OSS (Object Storage Service) with static website hosting.
+Aliyun ECS with Nginx serving static files.
 
-## CI/CD
-
-GitHub Actions workflow: `.github/workflows/deploy.yml`
-
-### Triggers
-
-- Push to `main` branch
-- Manual trigger via `workflow_dispatch`
-
-### Build Steps
-
-1. Checkout code
-2. Setup Node.js 22
-3. `npm install`
-4. `npm run build` (generates `dist/`)
-5. Upload `dist/` to OSS bucket
-
-### Required Secrets
-
-| Secret | Purpose |
-|--------|---------|
-| `OSS_ACCESS_KEY_ID` | Aliyun access key |
-| `OSS_ACCESS_KEY_SECRET` | Aliyun access secret |
-| `OSS_ENDPOINT` | OSS region endpoint |
-| `OSS_BUCKET` | Target bucket name |
-
-## Manual Deploy
+## Deploy
 
 ```bash
-npm run build
-# Upload dist/ to your hosting provider
+bash scripts/deploy.sh
 ```
+
+The script builds the site and rsyncs `dist/` to the remote server.
+
+### What it does
+
+1. `npm run build` — generates `dist/`
+2. `rsync -avz --delete` — syncs `dist/` to ECS via SSH
+
+### Requirements
+
+- SSH key at `~/.ssh/aliyun.pem`
+- Remote server configured in `scripts/deploy.sh`
 
 ## Post-Deploy Verification
 
