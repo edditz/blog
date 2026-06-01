@@ -1,7 +1,7 @@
 import type { SiteConfig } from "./types";
 
 export const siteConfig: SiteConfig = {
-    title: "My Blog",
+    title: "Eddie's Blog",
     description: "Sharing tech and life",
     siteUrl: "https://yourblog.com",
     author: {
@@ -14,7 +14,7 @@ export const siteConfig: SiteConfig = {
         { label: "About", href: "/about" },
     ],
     socials: {
-        github: "",
+        github: "https://github.com/edditz",
         twitter: "",
         linkedin: "",
     },
