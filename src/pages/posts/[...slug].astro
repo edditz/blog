@@ -162,7 +162,7 @@ const relatedPosts = allEntries
                     </div>
                 </div>
                 <div class="mb-6">
-                    <ShareButtons url={postUrl} title={post.data.title} />
+                    <ShareButtons title={post.data.title} />
                 </div>
                 {
                     post.data.image && (
@@ -195,7 +195,7 @@ const relatedPosts = allEntries
                 class="text-xs uppercase tracking-widest text-muted-foreground mb-4 block"
                 >Share this post</span
             >
-            <ShareButtons url={postUrl} title={post.data.title} />
+            <ShareButtons title={post.data.title} />
         </div>
 
         {

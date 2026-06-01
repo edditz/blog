@@ -1,18 +1,16 @@
 ---
 interface Props {
-    url: string;
     title: string;
 }
 
-const { url, title } = Astro.props;
-
-const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
-const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+const { title } = Astro.props;
 ---
 
-<div class="flex items-center gap-3 flex-wrap">
+<div
+    class="flex items-center gap-3 flex-wrap"
+    data-share-title={title}
+>
     <button
-        data-share-url={url}
         class="share-copy-btn text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-full hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5 cursor-pointer"
     >
         <svg
@@ -34,10 +32,10 @@ const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         <span class="share-copy-text">Copy link</span>
     </button>
     <a
-        href={twitterUrl}
+        href="#"
         target="_blank"
         rel="noreferrer"
-        class="text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-full hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5"
+        class="share-twitter-btn text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-full hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5"
         aria-label="Share on Twitter"
     >
         <svg class="size-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -48,10 +46,10 @@ const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         Twitter
     </a>
     <a
-        href={linkedinUrl}
+        href="#"
         target="_blank"
         rel="noreferrer"
-        class="text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-full hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5"
+        class="share-linkedin-btn text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-full hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5"
         aria-label="Share on LinkedIn"
     >
         <svg class="size-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -64,36 +62,66 @@ const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
 </div>
 
 <script>
-    let copyHandlers: { btn: HTMLElement; handler: () => void }[] = [];
+    type Cleanup = { el: HTMLElement; type: string; handler: EventListener };
+    let cleanups: Cleanup[] = [];
 
-    document.addEventListener("astro:before-swap", () => {
-        copyHandlers.forEach(({ btn, handler }) => {
-            btn.removeEventListener("click", handler);
-        });
-        copyHandlers = [];
-    });
+    function cleanup() {
+        cleanups.forEach(({ el, type, handler }) =>
+            el.removeEventListener(type, handler),
+        );
+        cleanups = [];
+    }
+
+    function on(el: HTMLElement, type: string, handler: EventListener) {
+        el.addEventListener(type, handler);
+        cleanups.push({ el, type, handler });
+    }
+
+    document.addEventListener("astro:before-swap", cleanup);
 
     document.addEventListener("astro:page-load", () => {
-        const buttons =
-            document.querySelectorAll<HTMLButtonElement>(".share-copy-btn");
-        buttons.forEach((btn) => {
-            const url = btn.getAttribute("data-share-url");
-            if (!url) return;
+        const containers = document.querySelectorAll<HTMLElement>(
+            "[data-share-title]",
+        );
 
-            const handler = () => {
-                navigator.clipboard.writeText(url).then(() => {
-                    const textEl = btn.querySelector(".share-copy-text");
-                    if (textEl) {
-                        textEl.textContent = "Copied!";
-                        setTimeout(() => {
-                            textEl.textContent = "Copy link";
-                        }, 2000);
-                    }
-                });
-            };
+        containers.forEach((container) => {
+            const title = container.dataset.shareTitle || "";
+            const url = window.location.href;
 
-            btn.addEventListener("click", handler);
-            copyHandlers.push({ btn, handler });
+            // Copy link
+            const copyBtn = container.querySelector<HTMLButtonElement>(
+                ".share-copy-btn",
+            );
+            if (copyBtn) {
+                const handler = () => {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        const textEl = copyBtn.querySelector(".share-copy-text");
+                        if (textEl) {
+                            textEl.textContent = "Copied!";
+                            setTimeout(() => {
+                                textEl.textContent = "Copy link";
+                            }, 2000);
+                        }
+                    });
+                };
+                on(copyBtn, "click", handler);
+            }
+
+            // Twitter
+            const twitterBtn = container.querySelector<HTMLAnchorElement>(
+                ".share-twitter-btn",
+            );
+            if (twitterBtn) {
+                twitterBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
+            }
+
+            // LinkedIn
+            const linkedinBtn = container.querySelector<HTMLAnchorElement>(
+                ".share-linkedin-btn",
+            );
+            if (linkedinBtn) {
+                linkedinBtn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+            }
         });
     });
 </script>
