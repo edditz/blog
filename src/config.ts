@@ -11,7 +11,6 @@ export const siteConfig: SiteConfig = {
     nav: [
         { label: "Writing", href: "/" },
         { label: "Columns", href: "/columns" },
-        { label: "Tags", href: "/tags" },
         { label: "About", href: "/about" },
     ],
     socials: {
