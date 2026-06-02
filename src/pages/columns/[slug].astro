@@ -1,0 +1,69 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Badge from "@/components/ui/Badge.astro";
+import { siteConfig } from "@/config";
+import { getAllColumnsWithPosts } from "@/columns/utils";
+
+export async function getStaticPaths() {
+    const columnsWithPosts = await getAllColumnsWithPosts();
+    return columnsWithPosts
+        .filter((col) => col.posts.length > 0)
+        .map((col) => ({
+            params: { slug: col.id },
+            props: { column: col },
+        }));
+}
+
+const { column } = Astro.props;
+---
+
+<Layout title={`${column.title} | ${siteConfig.title}`}>
+    <main class="page">
+        <div class="mb-10">
+            <a
+                href="/columns"
+                class="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+            >
+                <span>←</span> All columns
+            </a>
+        </div>
+
+        <span class="uppercase text-primary font-medium tracking-widest"
+            >column</span
+        >
+
+        <h1 class="text-4xl mt-10">{column.title}</h1>
+        <p class="text-lg max-w-122 text-muted-foreground">
+            {column.description}
+        </p>
+        <p class="text-sm text-muted-foreground mt-2">
+            {column.posts.length}
+            {column.posts.length === 1 ? " post" : " posts"} in this collection
+        </p>
+
+        <section class="mt-20 flex flex-col gap-3">
+            {
+                column.posts.map((post) => (
+                    <section class="flex flex-col gap-2 group hover:bg-muted px-3 py-8 rounded-md transition-all duration-300">
+                        <div class="flex flex-col md:flex-row gap-2 md:justify-between md:items-start">
+                            <a href={`/posts/${post.slug}`}>
+                                <h2 class="text-2xl group-hover:text-primary leading-tight">
+                                    {post.title}
+                                </h2>
+                            </a>
+                            <span class="text-muted-foreground text-xs shrink-0 whitespace-nowrap md:mt-1 md:text-right text-left mt-1">
+                                {post.readTime} min read
+                            </span>
+                        </div>
+                        <p class="text-muted-foreground">{post.frontmatter}</p>
+                        <section class="flex gap-2 flex-wrap">
+                            {post.tags.map((tag) => (
+                                <Badge content={tag} href={`/tags/${tag}`} />
+                            ))}
+                        </section>
+                    </section>
+                ))
+            }
+        </section>
+    </main>
+</Layout>
