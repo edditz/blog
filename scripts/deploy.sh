@@ -1,12 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-# Config
-REMOTE_HOST="120.26.254.107"
-REMOTE_USER="root"
-REMOTE_DIR="/var/www/blog"
-SSH_KEY="$HOME/.ssh/aliyun.pem"
-SSH_PORT=22
+CONFIG_FILE="$(dirname "$0")/.deploy.env"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "Error: $CONFIG_FILE not found"
+  echo "Create it with:"
+  echo "  REMOTE_HOST=your-host"
+  echo "  REMOTE_USER=your-user"
+  echo "  REMOTE_DIR=/path/to/dir"
+  echo "  SSH_KEY=~/.ssh/your-key.pem"
+  echo "  SSH_PORT=22"
+  exit 1
+fi
+
+source "$CONFIG_FILE"
 
 echo "Building blog..."
 npm run build
