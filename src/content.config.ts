@@ -13,6 +13,7 @@ const post = defineCollection({
     date: z.string(),
     frontmatter: z.string(),
     tags: z.array(z.string()),
+    columns: z.array(z.string()).optional().default([]),
     image: image().optional(),
     draft: z.boolean().optional().default(false),
     updatedDate: z.string().optional(),
