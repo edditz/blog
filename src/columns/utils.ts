@@ -2,9 +2,12 @@ import type { Column, ColumnWithPosts } from "./types";
 import { getCollection } from "astro:content";
 import { calcReadTime } from "@/utils/reading-time";
 
-const columnModules = import.meta.glob<Column>("./*.ts", { eager: true });
+// Get all .ts files except utils.ts, types.ts, and index.ts
+const columnModules = import.meta.glob<Column>("./!(utils|types|index).ts", {
+  eager: true,
+});
 
-const columns: Column[] = Object.values(columnModules);
+const columns: Column[] = Object.values(columnModules).map((mod) => mod.default);
 
 export function defineColumn(config: Column): Column {
   return config;

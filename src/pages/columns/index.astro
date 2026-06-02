@@ -1,0 +1,59 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { siteConfig } from "@/config";
+import { getAllColumnsWithPosts } from "@/columns/utils";
+
+const columnsWithPosts = await getAllColumnsWithPosts();
+const nonEmptyColumns = columnsWithPosts.filter((col) => col.posts.length > 0);
+---
+
+<Layout title={`Columns | ${siteConfig.title}`}>
+    <main class="page">
+        <div class="mb-10">
+            <a
+                href="/"
+                class="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+            >
+                <span>←</span> Back to writing
+            </a>
+        </div>
+
+        <span class="uppercase text-primary font-medium tracking-widest"
+            >browse</span
+        >
+
+        <h1 class="text-4xl mt-10">Columns</h1>
+        <p class="text-lg max-w-122 text-muted-foreground">
+            Curated collections of posts on related topics.
+        </p>
+
+        <section class="mt-20 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {
+                nonEmptyColumns.map((col) => (
+                    <a
+                        href={`/columns/${col.id}`}
+                        class="group flex flex-col gap-3 p-6 rounded-xl border border-border hover:border-primary/30 hover:bg-muted/50 transition-all duration-300"
+                    >
+                        {col.cover && (
+                            <img
+                                src={col.cover}
+                                alt={col.title}
+                                class="w-full h-40 object-cover rounded-lg"
+                            />
+                        )}
+                        <h2 class="text-xl font-medium group-hover:text-primary transition-colors">
+                            {col.title}
+                        </h2>
+                        <p class="text-sm text-muted-foreground">
+                            {col.description}
+                        </p>
+                        <span class="text-xs text-muted-foreground">
+                            {col.posts.length}
+                            {col.posts.length === 1 ? " post" : " posts"}
+                        </span>
+                    </a>
+                ))
+            }
+        </section>
+    </main>
+</Layout>
