@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import Badge from "./ui/Badge.astro";
 import { siteConfig } from "@/config";
 import { calcReadTime } from "@/utils/reading-time";
+import { getColumns } from "@/columns/utils";
 
 interface Props {
     page?: number;
@@ -17,6 +18,7 @@ const allPosts = entries
         id: entry.id,
         slug: entry.id,
         readTime: calcReadTime(entry.body!),
+        columns: entry.data.columns,
         ...entry.data,
     }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -49,6 +51,10 @@ const grouped = posts.reduce(
         return acc;
     },
     {} as Record<string, Record<string, MappedPost[]>>,
+);
+
+const columnLookup = Object.fromEntries(
+    getColumns().map((col) => [col.id, col]),
 );
 
 const pageUrl = (p: number) => (p === 1 ? "/" : `/page/${p}`);
@@ -98,6 +104,15 @@ const pageUrl = (p: number) => (p === 1 ? "/" : `/page/${p}`);
                                                     {post.frontmatter}
                                                 </p>
                                                 <section class="flex gap-2 flex-wrap">
+                                                    {post.columns?.map((colId: string) => {
+                                                        const col = columnLookup[colId];
+                                                        return col ? (
+                                                            <Badge
+                                                                content={col.title}
+                                                                href={`/columns/${col.id}`}
+                                                            />
+                                                        ) : null;
+                                                    })}
                                                     {post.tags.map((tag) => (
                                                         <Badge
                                                             content={tag}
